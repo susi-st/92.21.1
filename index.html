@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>9下2-1.1認識網路(網路的連接)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --macaron-pink: #FFB7B2;
+            --macaron-orange: #FFDAC1;
+            --macaron-yellow: #FFF9B1;
+            --macaron-green: #B5EAD7;
+            --macaron-blue: #C7CEEA;
+            --macaron-purple: #E0BBE4;
+            --macaron-mint: #E2F0CB;
+        }
+
+        body {
+            font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+            background-color: #fff1f2; /* 粉紅馬卡龍背景 */
+            overflow-x: hidden;
+        }
+
+        .main-card {
+            max-width: 1000px;
+            min-height: 85vh;
+            border-radius: 30px;
+            box-shadow: 0 20px 50px rgba(244, 114, 182, 0.1);
+        }
+
+        .macaron-btn {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: grab;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .macaron-btn:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+
+        .slot {
+            transition: all 0.3s ease;
+            min-height: 4rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            vertical-align: middle;
+            background: white;
+            border: 2px dashed rgba(0, 0, 0, 0.08);
+            font-weight: bold;
+            position: relative;
+        }
+
+        .slot.drag-over {
+            background: rgba(244, 114, 182, 0.05);
+            border-color: #f472b6;
+        }
+
+        /* 顏色類別 */
+        .color-0 { background-color: var(--macaron-pink); }
+        .color-1 { background-color: var(--macaron-orange); }
+        .color-2 { background-color: var(--macaron-yellow); }
+        .color-3 { background-color: var(--macaron-green); }
+        .color-4 { background-color: var(--macaron-blue); }
+        .color-5 { background-color: var(--macaron-purple); }
+        .color-6 { background-color: var(--macaron-mint); }
+        
+        .fixed-block { background-color: #f3f4f6; border: 2px solid #e5e7eb; display: inline-flex; justify-content: center; align-items: center; }
+
+        .correct-hint { border: 6px solid #4ade80 !important; }
+        .error-hint { border: 6px solid #f87171 !important; }
+
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .progress-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.4s ease;
+            background-color: white;
+            border: 2px solid #e5e7eb;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+        .progress-circle:hover { border-color: #f472b6; color: #f472b6; }
+        .progress-circle.active { border-color: #f472b6; background-color: #fff1f2; color: #f472b6; transform: scale(1.1); }
+        .progress-circle.passed {
+            background-color: #f472b6;
+            border-color: #f472b6;
+            color: white;
+            box-shadow: 0 4px 10px rgba(244, 114, 182, 0.2);
+        }
+
+        .choice-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .choice-card:hover { transform: translateY(-5px); }
+        .choice-card.selected { border-color: #f472b6; background-color: #fff1f2; }
+        
+        @keyframes celebrate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1) rotate(5deg); }
+            100% { transform: scale(1); }
+        }
+        .winner-anim { animation: celebrate 0.5s ease infinite; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div id="quiz-app" class="main-card bg-white w-full flex flex-col relative overflow-hidden">
+        
+        <header class="p-6 md:p-8 flex flex-wrap gap-4 justify-between items-center bg-pink-50/50">
+            <div class="flex flex-col">
+                <div class="flex items-center flex-wrap gap-4">
+                    <h1 class="text-2xl md:text-3xl font-bold text-pink-500 text-balance">🌐 9下2-1.1認識網路(網路的連接)</h1>
+                    <div id="status-indicators" class="flex gap-2 ml-2"></div>
+                </div>
+                <p class="text-gray-400 text-sm mt-1">作答進度: <span id="progress-text" class="font-bold text-pink-400"></span></p>
+            </div>
+            <div id="timer" class="text-xl font-bold text-gray-600 bg-white px-4 py-1 rounded-full shadow-sm">00:00</div>
+        </header>
+
+        <main id="question-container" class="flex-grow p-6 md:p-10 overflow-y-auto">
+            <!-- 題目由 JS 注入 -->
+        </main>
+
+        <footer class="p-6 md:p-8 bg-gray-50 flex flex-wrap gap-4 justify-between items-center relative z-[200]">
+            <button id="prev-btn" class="px-6 py-2 rounded-full border-2 border-pink-200 text-pink-400 font-bold hover:bg-pink-100 disabled:opacity-30 transition-all">
+                上一題
+            </button>
+            
+            <div class="flex items-center gap-4">
+                <button id="check-btn" class="px-8 py-3 bg-pink-500 text-white rounded-full font-bold shadow-lg shadow-pink-200 hover:bg-pink-600 transition-all active:scale-95">
+                    檢查答案
+                </button>
+                <button id="next-btn" class="px-6 py-2 rounded-full bg-indigo-400 text-white font-bold hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-100">
+                    下一題
+                </button>
+            </div>
+        </footer>
+
+        <div id="modal-overlay" class="fixed inset-0 bg-black/40 z-[300] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+            <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl transform scale-90 transition-transform duration-300" id="modal-content">
+                <div class="text-4xl mb-4 text-center">💡</div>
+                <h3 id="modal-title" class="text-xl font-bold text-gray-800 text-center mb-2">溫馨提醒</h3>
+                <p id="modal-message" class="text-gray-600 text-center mb-6 leading-relaxed"></p>
+                <div class="flex gap-4 justify-center">
+                    <button onclick="closeModal()" class="px-6 py-2 border-2 border-gray-200 text-gray-400 font-bold rounded-full hover:bg-gray-50 transition-all active:scale-95">返回</button>
+                    <button id="modal-confirm-btn" class="px-6 py-2 bg-pink-500 text-white font-bold rounded-full hover:bg-pink-600 transition-all active:scale-95 shadow-lg shadow-pink-100">前往下一題</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="result-overlay" class="absolute inset-0 bg-white z-[500] flex flex-col items-center justify-center p-6 md:p-10 hidden fade-in overflow-y-auto">
+            <div class="border-4 border-pink-200 rounded-3xl p-8 max-w-3xl w-full bg-white shadow-xl my-8">
+                <h2 class="text-3xl font-bold text-pink-500 mb-6 text-center text-balance">📝 測驗挑戰結果</h2>
+                <div id="final-stats" class="space-y-4 mb-8"></div>
+                <div class="bg-pink-50 p-6 rounded-2xl mb-8 text-center border border-pink-100">
+                    <div id="quote-zh" class="text-xl font-bold text-pink-600 mb-3 text-balance"></div>
+                    <div id="quote-en" class="text-base italic text-pink-400 leading-relaxed text-balance"></div>
+                </div>
+                <div class="flex justify-center">
+                    <button onclick="restartQuiz()" class="px-12 py-4 bg-pink-500 text-white rounded-full text-xl font-bold shadow-xl hover:bg-pink-600 transition-all active:scale-95">重新挑戰</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 px-8 py-4 rounded-full bg-gray-800 text-white font-bold opacity-0 transition-opacity pointer-events-none z-[600] text-xl shadow-lg"></div>
+
+    <script>
+        const quizData = [
+            {
+                type: 'matching_fixed',
+                question: "請根據網路發展史，排列正確的順序：",
+                options: ["ARPANET", "TCP/IP", "網域名稱服務", "WWW+瀏覽器", "TANet"],
+                steps: [
+                    { type: 'fixed', name: "以前", desc: "起點" },
+                    { type: 'slot', answer: "ARPANET", desc: "網際網路雛形" },
+                    { type: 'slot', answer: "TCP/IP", desc: "共同通訊語言" },
+                    { type: 'slot', answer: "網域名稱服務", desc: "IP轉易記網址" },
+                    { type: 'slot', answer: "WWW+瀏覽器", desc: "圖形化介面普及" },
+                    { type: 'slot', answer: "TANet", desc: "臺灣學術網路" },
+                    { type: 'fixed', name: "現在", desc: "現況" }
+                ],
+                forceColor: true
+            },
+            {
+                type: 'multiple_choice',
+                question: "請問誰發明了全球資訊網與網頁瀏覽器？",
+                correct: "柏納．李",
+                options: [
+                    { text: "柏納．李", icon: "🌐", desc: "全球資訊網之父" },
+                    { text: "比爾．蓋茲", icon: "💻", desc: "微軟創辦人" },
+                    { text: "伊隆·馬斯克", icon: "🚀", desc: "特斯拉執行長" },
+                    { text: "馬克·祖克柏", icon: "👥", desc: "Facebook創辦人" }
+                ],
+                theme: "pink"
+            },
+            {
+                type: 'drag_and_drop',
+                question: "[__]是透過有線或無線的[__]，將許多電腦或硬體設備[__]起來，讓彼此可以互相[__]的技術。",
+                blanks: ["網路", "傳輸媒介", "連接", "傳遞資訊"],
+                options: ["網路", "傳輸媒介", "連接", "傳遞資訊"],
+                forceColor: true
+            },
+            {
+                type: 'matching_list',
+                question: "請將下列中英文名詞進行正確配對：",
+                items: [
+                    { label: "網路", answer: "Network" },
+                    { label: "全球第一個網路", answer: "ARPANET" },
+                    { label: "網路通訊協定", answer: "TCP/IP" },
+                    { label: "全球資訊網簡稱", answer: "WWW" },
+                    { label: "臺灣學術網路", answer: "TANet" },
+                    { label: "網路服務提供者", answer: "ISP" }
+                ],
+                options: ["Network", "ARPANET", "TCP/IP", "WWW", "TANet", "ISP"],
+                colorSplit: true
+            },
+            {
+                type: 'matching_fixed',
+                question: "請由「慢」到「快」排列有線傳輸媒介速度：",
+                options: ["雙絞線", "同軸電纜線", "光纖"],
+                steps: [
+                    { type: 'fixed', name: "慢" },
+                    { type: 'slot', answer: "雙絞線" },
+                    { type: 'slot', answer: "同軸電纜線" },
+                    { type: 'slot', answer: "光纖" },
+                    { type: 'fixed', name: "快" }
+                ],
+                forceColor: true
+            },
+            {
+                type: 'matching_fixed',
+                question: "請依傳輸距離「遠」到「近」排列有線傳輸媒介：",
+                options: ["光纖", "同軸電纜線", "雙絞線"],
+                steps: [
+                    { type: 'fixed', name: "遠" },
+                    { type: 'slot', answer: "光纖" },
+                    { type: 'slot', answer: "同軸電纜線" },
+                    { type: 'slot', answer: "雙絞線" },
+                    { type: 'fixed', name: "近" }
+                ],
+                forceColor: true
+            },
+            {
+                type: 'matching_list',
+                question: "請根據環境說明選擇適合的傳輸媒介：",
+                items: [
+                    { label: "借住二樓，不求速度，上網就好", answer: "雙絞線" },
+                    { label: "工廠佈線，路徑會經過高功率機器", answer: "同軸電纜線" },
+                    { label: "司令台到教室，需要快速穩定的節點", answer: "光纖" }
+                ],
+                options: ["雙絞線", "同軸電纜線", "光纖"]
+            },
+            {
+                type: 'matching_list',
+                question: "請根據功能說明，配對正確的網路連接設備：",
+                items: [
+                    { label: "負責類比/數位訊號轉換", answer: "數據機" },
+                    { label: "負責安排資料的傳送路徑", answer: "路由器" },
+                    { label: "可擴充內部網路接孔", answer: "網路交換器" }
+                ],
+                options: ["數據機", "路由器", "網路交換器"]
+            }
+        ];
+
+        const inspirationalQuotes = [
+            { en: "Connection is the energy that exists between people.", zh: "連結是人與人之間存在的能量。" },
+            { en: "Believe you can and you're halfway there.", zh: "相信自己能做到，你就已經成功了一半。" },
+            { en: "Stay curious, keep connecting.", zh: "保持好奇，持續連結。" }
+        ];
+
+        let currentIdx = 0;
+        let userStates = {};
+        let quizPassedStatus = {}; 
+        let totalChecks = 0; 
+        let startTime = Date.now();
+        let timerInterval = null;
+
+        window.onload = () => {
+            initIndicators();
+            renderQuestion();
+            setupGlobalEvents();
+            startTimer();
+        };
+
+        function initIndicators() {
+            const container = document.getElementById('status-indicators');
+            container.innerHTML = quizData.map((_, i) => `<div class="progress-circle" data-idx="${i}" onclick="goToQuestion(${i})">${i+1}</div>`).join('');
+        }
+
+        function goToQuestion(idx) {
+            saveState();
+            currentIdx = idx;
+            renderQuestion();
+        }
+
+        function setupGlobalEvents() {
+            document.getElementById('next-btn').onclick = () => navigate(1);
+            document.getElementById('prev-btn').onclick = () => navigate(-1);
+            document.getElementById('check-btn').onclick = checkAnswer;
+        }
+
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
+                const secs = String(elapsed % 60).padStart(2, '0');
+                document.getElementById('timer').innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function renderQuestion() {
+            const container = document.getElementById('question-container');
+            const q = quizData[currentIdx];
+            document.getElementById('progress-text').innerText = `${currentIdx + 1} / ${quizData.length}`;
+            document.getElementById('prev-btn').disabled = (currentIdx === 0);
+            document.getElementById('next-btn').innerText = (currentIdx === quizData.length - 1) ? "查看結果" : "下一題";
+
+            document.querySelectorAll('.progress-circle').forEach(c => {
+                c.classList.remove('active');
+                if(parseInt(c.dataset.idx) === currentIdx) c.classList.add('active');
+            });
+
+            container.innerHTML = '';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'fade-in';
+
+            if (q.type === 'matching_fixed') renderMatchingFixed(q, wrapper);
+            else if (q.type === 'multiple_choice') renderMultipleChoice(q, wrapper);
+            else if (q.type === 'drag_and_drop') renderDragAndDrop(q, wrapper);
+            else if (q.type === 'matching_list') renderMatchingList(q, wrapper);
+
+            container.appendChild(wrapper);
+            restoreState();
+            updateProgressIndicators();
+        }
+
+        function renderMatchingFixed(q, wrapper) {
+            const title = document.createElement('h3');
+            title.className = "text-2xl text-gray-700 font-bold mb-10 text-center";
+            title.innerText = q.question;
+            wrapper.appendChild(title);
+
+            const flow = document.createElement('div');
+            flow.className = "flex flex-wrap justify-center gap-4 items-start";
+            
+            q.steps.forEach((step, idx) => {
+                const item = document.createElement('div');
+                item.className = "flex flex-col items-center gap-1";
+
+                const desc = document.createElement('p');
+                desc.className = "text-xs text-pink-400 font-bold h-6";
+                desc.innerText = step.desc || "";
+                item.appendChild(desc);
+
+                if (step.type === 'fixed') {
+                    const fixed = document.createElement('div');
+                    fixed.className = "fixed-block px-5 py-5 rounded-xl font-bold text-gray-400 text-xl bg-gray-50 whitespace-nowrap";
+                    fixed.innerText = step.name;
+                    item.appendChild(fixed);
+                } else {
+                    const slot = createSlot(idx, step.answer);
+                    slot.className += " px-4 py-6 rounded-xl border-2 text-xl bg-white min-w-[120px]";
+                    item.appendChild(slot);
+                }
+                
+                flow.appendChild(item);
+                
+                if (idx < q.steps.length - 1) {
+                    const arrowWrap = document.createElement('div');
+                    arrowWrap.className = "pt-10 hidden md:block";
+                    arrowWrap.innerHTML = "<span class='text-gray-300 font-bold text-xl'>➜</span>";
+                    flow.appendChild(arrowWrap);
+                }
+            });
+            wrapper.appendChild(flow);
+            renderSourceArea(q.options, wrapper, q.forceColor);
+        }
+
+        function renderMultipleChoice(q, wrapper) {
+            const title = document.createElement('h3');
+            title.className = "text-2xl text-gray-700 font-bold mb-10 text-center";
+            title.innerText = q.question;
+            wrapper.appendChild(title);
+
+            const grid = document.createElement('div');
+            grid.className = "grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto";
+            
+            q.options.forEach((opt, i) => {
+                const card = document.createElement('div');
+                card.className = `choice-card bg-white border-4 border-white p-6 rounded-3xl shadow-sm flex items-center gap-6 hover:bg-pink-50`;
+                card.dataset.value = opt.text;
+                card.onclick = () => {
+                    document.querySelectorAll('.choice-card').forEach(c => c.classList.remove('selected', 'border-pink-300'));
+                    card.classList.add('selected', 'border-pink-300');
+                    saveState();
+                };
+
+                card.innerHTML = `
+                    <div class="text-5xl">${opt.icon}</div>
+                    <div>
+                        <div class="text-2xl font-bold text-gray-700">${opt.text}</div>
+                        <div class="text-sm text-gray-400">${opt.desc}</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            wrapper.appendChild(grid);
+        }
+
+        function renderDragAndDrop(q, wrapper) {
+            const title = document.createElement('h3');
+            title.className = "text-2xl text-gray-700 font-bold mb-12 leading-relaxed text-center px-4";
+            const parts = q.question.split('[__]');
+            parts.forEach((part, i) => {
+                title.appendChild(document.createTextNode(part));
+                if (i < parts.length - 1) {
+                    const slot = createSlot(i, q.blanks[i]);
+                    slot.style.minWidth = "120px";
+                    slot.className += " mx-2 px-4 py-1 border-b-4 border-pink-200 inline-flex align-middle";
+                    title.appendChild(slot);
+                }
+            });
+            wrapper.appendChild(title);
+            renderSourceArea(q.options, wrapper, q.forceColor);
+        }
+
+        function renderMatchingList(q, wrapper) {
+            const title = document.createElement('h3');
+            title.className = "text-2xl text-gray-700 font-bold mb-10 text-center";
+            title.innerText = q.question;
+            wrapper.appendChild(title);
+
+            const list = document.createElement('div');
+            list.className = "grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto";
+
+            const shuffledItems = [...q.items].sort(() => Math.random() - 0.5);
+
+            shuffledItems.forEach((item, i) => {
+                const itemBox = document.createElement('div');
+                // 每個區塊使用不同色彩
+                let colorClass = `color-${i % 7}`;
+                if(q.colorSplit) {
+                    colorClass = (item.label.includes('網路') || item.label.includes('提供者')) ? 'color-4' : 'color-1';
+                }
+                
+                itemBox.className = `${colorClass} p-5 pt-3 pb-4 rounded-3xl border-2 border-white shadow-sm flex flex-col gap-2 transition-all hover:scale-[1.02]`;
+                
+                const label = document.createElement('div');
+                label.className = "text-xl font-black text-center text-gray-800 text-balance min-h-[3rem] flex items-center justify-center";
+                label.innerText = item.label;
+                itemBox.appendChild(label);
+
+                // 找到原 index 為了對應 slot
+                const originalIndex = q.items.findIndex(orig => orig.label === item.label);
+                const slot = createSlot(originalIndex, item.answer);
+                slot.className += " w-full rounded-2xl py-4 bg-white/90 border-none text-xl shadow-inner";
+                itemBox.appendChild(slot);
+                list.appendChild(itemBox);
+            });
+            wrapper.appendChild(list);
+            renderSourceArea(q.options, wrapper, true);
+        }
+
+        function createSlot(index, answer) {
+            const slot = document.createElement('div');
+            slot.className = "slot";
+            slot.dataset.type = "slot";
+            slot.dataset.index = index;
+            slot.dataset.answer = answer;
+            slot.ondragover = e => { e.preventDefault(); slot.classList.add('drag-over'); };
+            slot.ondragleave = () => slot.classList.remove('drag-over');
+            slot.ondrop = handleDrop;
+            return slot;
+        }
+
+        function renderSourceArea(options, wrapper, forceColor) {
+            const sourceArea = document.createElement('div');
+            sourceArea.className = "mt-12 p-8 bg-pink-50/30 rounded-3xl border-2 border-dashed border-pink-100 flex flex-wrap justify-center gap-4 min-h-[100px]";
+            sourceArea.id = "source-area";
+            sourceArea.dataset.type = "source";
+            sourceArea.ondragover = e => e.preventDefault();
+            sourceArea.ondrop = handleDrop;
+
+            const shuffled = [...options].sort(() => Math.random() - 0.5);
+            shuffled.forEach((opt, idx) => {
+                const colorIdx = forceColor ? options.indexOf(opt) % 7 : idx % 7;
+                sourceArea.appendChild(createDragElement(opt, colorIdx));
+            });
+            wrapper.appendChild(sourceArea);
+        }
+
+        function createDragElement(text, colorIdx) {
+            const el = document.createElement('div');
+            el.className = `macaron-btn color-${colorIdx} px-6 py-2 rounded-xl shadow-md font-bold text-gray-700 border-2 border-white/50 text-xl whitespace-nowrap`;
+            el.innerText = text;
+            el.id = "opt-" + Math.random().toString(36).substr(2, 9);
+            el.draggable = true;
+            el.dataset.value = text;
+            el.ondragstart = e => { e.dataTransfer.setData("text/plain", el.id); e.target.style.opacity = "0.5"; };
+            el.ondragend = e => { e.target.style.opacity = "1"; };
+            return el;
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const target = e.currentTarget;
+            target.classList.remove('drag-over');
+            const elId = e.dataTransfer.getData("text/plain");
+            const el = document.getElementById(elId);
+            if (!el) return;
+
+            if (target.dataset.type === "slot") {
+                const existing = target.querySelector('.macaron-btn');
+                if (existing) document.getElementById('source-area').appendChild(existing);
+                target.appendChild(el);
+            } else {
+                target.appendChild(el);
+            }
+            saveState();
+        }
+
+        function saveState() {
+            const q = quizData[currentIdx];
+            const state = { values: {} };
+            if (q.type === 'multiple_choice') {
+                const selected = document.querySelector('.choice-card.selected');
+                if (selected) state.selected = selected.dataset.value;
+            } else {
+                document.querySelectorAll('.slot').forEach(slot => {
+                    const item = slot.querySelector('.macaron-btn');
+                    if (item) state.values[slot.dataset.index] = { id: item.id, val: item.dataset.value };
+                });
+            }
+            userStates[currentIdx] = state;
+        }
+
+        function restoreState() {
+            const state = userStates[currentIdx];
+            if (!state) return;
+            const q = quizData[currentIdx];
+            if (q.type === 'multiple_choice') {
+                if (state.selected) {
+                    const card = document.querySelector(`.choice-card[data-value="${state.selected}"]`);
+                    if (card) card.classList.add('selected', 'border-pink-300');
+                }
+            } else {
+                Object.keys(state.values).forEach(idx => {
+                    const el = document.getElementById(state.values[idx].id);
+                    const slot = document.querySelector(`.slot[data-index="${idx}"]`);
+                    if (el && slot) slot.appendChild(el);
+                });
+            }
+        }
+
+        function navigate(dir) {
+            saveState();
+            if (dir > 0 && currentIdx + dir < quizData.length) {
+                currentIdx += dir;
+                renderQuestion();
+            } else if (dir < 0) {
+                currentIdx += dir;
+                renderQuestion();
+            } else if (dir > 0 && currentIdx === quizData.length - 1) {
+                showFinalSummary();
+            }
+        }
+
+        function checkAnswer() {
+            totalChecks++;
+            const q = quizData[currentIdx];
+            let errors = 0;
+            let incomplete = false;
+
+            if (q.type === 'multiple_choice') {
+                const selected = userStates[currentIdx]?.selected;
+                if (!selected) { showToast("請選擇一個答案喔！", "error"); return; }
+                if (selected !== q.correct) errors++;
+                else {
+                    const winCard = document.querySelector('.choice-card.selected');
+                    winCard.classList.add('winner-anim');
+                    setTimeout(() => winCard.classList.remove('winner-anim'), 2000);
+                }
+            } else {
+                const slots = document.querySelectorAll('.slot');
+                slots.forEach(slot => {
+                    const item = slot.querySelector('.macaron-btn');
+                    if (!item) incomplete = true;
+                    else if (item.dataset.value !== slot.dataset.answer) errors++;
+                });
+            }
+
+            if (incomplete) { showToast("還有空格沒填完喔！", "error"); return; }
+            if (errors === 0) {
+                showToast("🎉 太棒了！全部正確！", "success");
+                quizPassedStatus[currentIdx] = true;
+                updateProgressIndicators();
+            } else {
+                showToast(`還差一點點，加油！`, "error");
+            }
+        }
+
+        function updateProgressIndicators() {
+            document.querySelectorAll('.progress-circle').forEach(circle => {
+                if (quizPassedStatus[parseInt(circle.dataset.idx)]) circle.classList.add('passed');
+            });
+        }
+
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.className = `fixed bottom-10 left-1/2 -translate-x-1/2 px-8 py-4 rounded-full text-white font-bold transition-all z-[600] text-xl shadow-lg ${type === 'success' ? 'bg-green-500' : 'bg-gray-800'}`;
+            toast.style.opacity = "1";
+            setTimeout(() => toast.style.opacity = "0", 2500);
+        }
+
+        function restartQuiz() {
+            userStates = {};
+            quizPassedStatus = {};
+            totalChecks = 0;
+            currentIdx = 0;
+            document.getElementById('result-overlay').classList.add('hidden');
+            document.querySelectorAll('.progress-circle').forEach(c => c.classList.remove('passed'));
+            renderQuestion();
+            startTimer();
+        }
+
+        function showFinalSummary() {
+            clearInterval(timerInterval);
+            const timerText = document.getElementById('timer').innerText;
+            let correctCount = Object.keys(quizPassedStatus).length;
+            const quote = inspirationalQuotes[Math.floor(Math.random() * inspirationalQuotes.length)];
+            
+            document.getElementById('quote-zh').innerText = quote.zh;
+            document.getElementById('quote-en').innerText = quote.en;
+            document.getElementById('final-stats').innerHTML = `
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-pink-50 p-4 rounded-2xl text-center"><p class="text-gray-400 text-sm">總題數</p><p class="text-3xl font-black text-pink-600">${quizData.length}</p></div>
+                    <div class="bg-green-50 p-4 rounded-2xl text-center"><p class="text-gray-400 text-sm">答對題數</p><p class="text-3xl font-black text-green-600">${correctCount}</p></div>
+                </div>
+                <div class="text-center p-4">
+                    <p class="text-lg text-gray-500">總用時：<span class="text-pink-500 font-bold">${timerText}</span> | 檢查次數：<span class="text-pink-500 font-bold">${totalChecks}</span></p>
+                </div>`;
+            document.getElementById('result-overlay').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
