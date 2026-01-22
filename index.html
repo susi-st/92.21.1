@@ -30,12 +30,18 @@
             box-shadow: 0 20px 50px rgba(244, 114, 182, 0.1);
         }
 
+        /* 讓按鈕內的文字不影響點擊判定 */
+        button *, .macaron-btn *, .choice-card *, .progress-circle * {
+            pointer-events: none;
+        }
+
         .macaron-btn {
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: grab;
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            user-select: none;
         }
 
         .macaron-btn:active {
@@ -45,20 +51,27 @@
 
         .slot {
             transition: all 0.3s ease;
-            min-height: 4rem;
+            min-height: 3.5rem;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             vertical-align: middle;
             background: white;
-            border: 2px dashed rgba(0, 0, 0, 0.08);
+            border: 2px dashed rgba(0, 0, 0, 0.05);
             font-weight: bold;
             position: relative;
+            pointer-events: none; 
         }
 
-        .slot.drag-over {
-            background: rgba(244, 114, 182, 0.05);
-            border-color: #f472b6;
+        .drop-target-box {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .drop-target-box.drag-over {
+            transform: scale(1.03);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            filter: brightness(1.05);
         }
 
         /* 顏色類別 */
@@ -72,8 +85,14 @@
         
         .fixed-block { background-color: #f3f4f6; border: 2px solid #e5e7eb; display: inline-flex; justify-content: center; align-items: center; }
 
-        .correct-hint { border: 6px solid #4ade80 !important; }
-        .error-hint { border: 6px solid #f87171 !important; }
+        .correct-hint { border: 4px solid #4ade80 !important; }
+        .error-hint { border: 4px solid #f87171 !important; animation: shake 0.4s ease-in-out; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
 
         .fade-in { animation: fadeIn 0.5s ease-out forwards; }
         @keyframes fadeIn {
@@ -156,12 +175,12 @@
 
         <div id="modal-overlay" class="fixed inset-0 bg-black/40 z-[300] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
             <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl transform scale-90 transition-transform duration-300" id="modal-content">
-                <div class="text-4xl mb-4 text-center">💡</div>
-                <h3 id="modal-title" class="text-xl font-bold text-gray-800 text-center mb-2">溫馨提醒</h3>
+                <div class="text-4xl mb-4 text-center" id="modal-icon">💡</div>
+                <h3 id="modal-title" class="text-xl font-bold text-gray-800 text-center mb-2">提醒</h3>
                 <p id="modal-message" class="text-gray-600 text-center mb-6 leading-relaxed"></p>
                 <div class="flex gap-4 justify-center">
-                    <button onclick="closeModal()" class="px-6 py-2 border-2 border-gray-200 text-gray-400 font-bold rounded-full hover:bg-gray-50 transition-all active:scale-95">返回</button>
-                    <button id="modal-confirm-btn" class="px-6 py-2 bg-pink-500 text-white font-bold rounded-full hover:bg-pink-600 transition-all active:scale-95 shadow-lg shadow-pink-100">前往下一題</button>
+                    <button id="modal-cancel-btn" onclick="closeModal()" class="px-6 py-2 border-2 border-gray-200 text-gray-400 font-bold rounded-full hover:bg-gray-50 transition-all active:scale-95">返回</button>
+                    <button id="modal-confirm-btn" class="px-6 py-2 bg-pink-500 text-white font-bold rounded-full hover:bg-pink-600 transition-all active:scale-95 shadow-lg shadow-pink-100">確認</button>
                 </div>
             </div>
         </div>
@@ -175,7 +194,7 @@
                     <div id="quote-en" class="text-base italic text-pink-400 leading-relaxed text-balance"></div>
                 </div>
                 <div class="flex justify-center">
-                    <button onclick="restartQuiz()" class="px-12 py-4 bg-pink-500 text-white rounded-full text-xl font-bold shadow-xl hover:bg-pink-600 transition-all active:scale-95">重新挑戰</button>
+                    <button onclick="handleRestart()" class="px-12 py-4 bg-pink-500 text-white rounded-full text-xl font-bold shadow-xl hover:bg-pink-600 transition-all active:scale-95">重新挑戰</button>
                 </div>
             </div>
         </div>
@@ -184,6 +203,17 @@
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 px-8 py-4 rounded-full bg-gray-800 text-white font-bold opacity-0 transition-opacity pointer-events-none z-[600] text-xl shadow-lg"></div>
 
     <script>
+        // 洗牌演算法
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
         const quizData = [
             {
                 type: 'matching_fixed',
@@ -205,10 +235,10 @@
                 question: "請問誰發明了全球資訊網與網頁瀏覽器？",
                 correct: "柏納．李",
                 options: [
-                    { text: "柏納．李", icon: "🌐", desc: "全球資訊網之父" },
-                    { text: "比爾．蓋茲", icon: "💻", desc: "微軟創辦人" },
-                    { text: "伊隆·馬斯克", icon: "🚀", desc: "特斯拉執行長" },
-                    { text: "馬克·祖克柏", icon: "👥", desc: "Facebook創辦人" }
+                    { text: "柏納．李", icon: "🌐" },
+                    { text: "比爾．蓋茲", icon: "💻" },
+                    { text: "伊隆·馬斯克", icon: "🚀" },
+                    { text: "馬克·祖克柏", icon: "👥" }
                 ],
                 theme: "pink"
             },
@@ -231,7 +261,8 @@
                     { label: "網路服務提供者", answer: "ISP" }
                 ],
                 options: ["Network", "ARPANET", "TCP/IP", "WWW", "TANet", "ISP"],
-                colorSplit: true
+                randomPos: true,
+                customColorGroups: true
             },
             {
                 type: 'matching_fixed',
@@ -263,11 +294,15 @@
                 type: 'matching_list',
                 question: "請根據環境說明選擇適合的傳輸媒介：",
                 items: [
-                    { label: "借住二樓，不求速度，上網就好", answer: "雙絞線" },
-                    { label: "工廠佈線，路徑會經過高功率機器", answer: "同軸電纜線" },
-                    { label: "司令台到教室，需要快速穩定的節點", answer: "光纖" }
+                    { label: "朋友借住家裡二樓兩天，有上網的需求，但二樓沒有網路，最近的網路設備在三樓，速度不要求，可以上網就好", answer: "雙絞線" },
+                    { label: "工廠辦公室人太多坐不下，在直線50公尺處，新增一間辦公室，想串連舊辦公室的網路，佈線路徑會經過很多高功率的機器", answer: "同軸電纜線" },
+                    { label: "光復國中操場的司令台想要安排一個快速又穩定的有線網路節點，但最近的網路設備在電腦教室", answer: "光纖" }
                 ],
-                options: ["雙絞線", "同軸電纜線", "光纖"]
+                options: ["雙絞線", "同軸電纜線", "光纖"],
+                randomPos: true,
+                shuffleOnError: true,
+                isThreeColumns: true, 
+                customColorGroups: true
             },
             {
                 type: 'matching_list',
@@ -277,7 +312,11 @@
                     { label: "負責安排資料的傳送路徑", answer: "路由器" },
                     { label: "可擴充內部網路接孔", answer: "網路交換器" }
                 ],
-                options: ["數據機", "路由器", "網路交換器"]
+                options: ["數據機", "路由器", "網路交換器"],
+                randomPos: true,
+                shuffleOnError: true,
+                isThreeColumns: true, 
+                customColorGroups: true
             }
         ];
 
@@ -289,6 +328,7 @@
 
         let currentIdx = 0;
         let userStates = {};
+        let quizCheckedStatus = {}; 
         let quizPassedStatus = {}; 
         let totalChecks = 0; 
         let startTime = Date.now();
@@ -328,6 +368,27 @@
             }, 1000);
         }
 
+        function showModal(title, message, confirmText, onConfirm, showCancel = true) {
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-message').innerText = message;
+            const confirmBtn = document.getElementById('modal-confirm-btn');
+            confirmBtn.innerText = confirmText;
+            confirmBtn.onclick = () => { closeModal(); if(onConfirm) onConfirm(); };
+            const cancelBtn = document.getElementById('modal-cancel-btn');
+            cancelBtn.style.display = showCancel ? 'block' : 'none';
+            overlay.classList.remove('hidden');
+            setTimeout(() => { overlay.classList.remove('opacity-0'); content.classList.remove('scale-90'); }, 10);
+        }
+
+        function closeModal() {
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
+            overlay.classList.add('opacity-0'); content.classList.add('scale-90');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        }
+
         function renderQuestion() {
             const container = document.getElementById('question-container');
             const q = quizData[currentIdx];
@@ -359,35 +420,38 @@
             title.className = "text-2xl text-gray-700 font-bold mb-10 text-center";
             title.innerText = q.question;
             wrapper.appendChild(title);
-
             const flow = document.createElement('div');
             flow.className = "flex flex-wrap justify-center gap-4 items-start";
             
             q.steps.forEach((step, idx) => {
                 const item = document.createElement('div');
-                item.className = "flex flex-col items-center gap-1";
+                item.className = "flex flex-col items-center gap-1 drop-target-box rounded-2xl p-2";
+                item.dataset.type = "target-box";
+                item.dataset.index = idx;
+                item.dataset.answer = step.answer || "";
+                item.ondragover = handleDragOver;
+                item.ondragleave = handleDragLeave;
+                item.ondrop = handleDrop;
 
                 const desc = document.createElement('p');
-                desc.className = "text-xs text-pink-400 font-bold h-6";
+                desc.className = "text-xs text-pink-400 font-bold h-6 pointer-events-none";
                 desc.innerText = step.desc || "";
                 item.appendChild(desc);
-
                 if (step.type === 'fixed') {
                     const fixed = document.createElement('div');
-                    fixed.className = "fixed-block px-5 py-5 rounded-xl font-bold text-gray-400 text-xl bg-gray-50 whitespace-nowrap";
+                    fixed.className = "fixed-block px-5 py-5 rounded-xl font-bold text-gray-400 text-xl bg-gray-50 whitespace-nowrap pointer-events-none";
                     fixed.innerText = step.name;
                     item.appendChild(fixed);
                 } else {
-                    const slot = createSlot(idx, step.answer);
-                    slot.className += " px-4 py-6 rounded-xl border-2 text-xl bg-white min-w-[120px]";
+                    const slot = document.createElement('div');
+                    slot.className = "slot px-4 py-6 rounded-xl border-2 text-xl bg-white min-w-[120px]";
+                    slot.dataset.type = "slot";
                     item.appendChild(slot);
                 }
-                
                 flow.appendChild(item);
-                
                 if (idx < q.steps.length - 1) {
                     const arrowWrap = document.createElement('div');
-                    arrowWrap.className = "pt-10 hidden md:block";
+                    arrowWrap.className = "pt-12 hidden md:block pointer-events-none";
                     arrowWrap.innerHTML = "<span class='text-gray-300 font-bold text-xl'>➜</span>";
                     flow.appendChild(arrowWrap);
                 }
@@ -401,27 +465,21 @@
             title.className = "text-2xl text-gray-700 font-bold mb-10 text-center";
             title.innerText = q.question;
             wrapper.appendChild(title);
-
             const grid = document.createElement('div');
             grid.className = "grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto";
             
-            q.options.forEach((opt, i) => {
+            const shuffledOptions = shuffleArray([...q.options]);
+            
+            shuffledOptions.forEach((opt, i) => {
                 const card = document.createElement('div');
-                card.className = `choice-card bg-white border-4 border-white p-6 rounded-3xl shadow-sm flex items-center gap-6 hover:bg-pink-50`;
+                card.className = `choice-card bg-white border-4 border-white p-6 rounded-3xl shadow-sm flex items-center justify-center gap-6 hover:bg-pink-50`;
                 card.dataset.value = opt.text;
-                card.onclick = () => {
+                card.onclick = (e) => {
                     document.querySelectorAll('.choice-card').forEach(c => c.classList.remove('selected', 'border-pink-300'));
-                    card.classList.add('selected', 'border-pink-300');
+                    e.currentTarget.classList.add('selected', 'border-pink-300');
                     saveState();
                 };
-
-                card.innerHTML = `
-                    <div class="text-5xl">${opt.icon}</div>
-                    <div>
-                        <div class="text-2xl font-bold text-gray-700">${opt.text}</div>
-                        <div class="text-sm text-gray-400">${opt.desc}</div>
-                    </div>
-                `;
+                card.innerHTML = `<div class="text-5xl">${opt.icon}</div><div class="text-2xl font-bold text-gray-700">${opt.text}</div>`;
                 grid.appendChild(card);
             });
             wrapper.appendChild(grid);
@@ -429,15 +487,27 @@
 
         function renderDragAndDrop(q, wrapper) {
             const title = document.createElement('h3');
-            title.className = "text-2xl text-gray-700 font-bold mb-12 leading-relaxed text-center px-4";
+            title.className = "text-2xl text-gray-700 font-bold mb-12 leading-relaxed text-left px-8 flex flex-wrap items-center gap-x-2 gap-y-4";
             const parts = q.question.split('[__]');
             parts.forEach((part, i) => {
-                title.appendChild(document.createTextNode(part));
+                const pNode = document.createElement('span');
+                pNode.innerText = part;
+                title.appendChild(pNode);
                 if (i < parts.length - 1) {
-                    const slot = createSlot(i, q.blanks[i]);
-                    slot.style.minWidth = "120px";
-                    slot.className += " mx-2 px-4 py-1 border-b-4 border-pink-200 inline-flex align-middle";
-                    title.appendChild(slot);
+                    const targetBox = document.createElement('div');
+                    targetBox.className = "drop-target-box inline-flex items-center justify-center min-w-[120px] px-2 py-1 border-b-4 border-pink-200 bg-pink-50/20 rounded-t-lg transition-all";
+                    targetBox.dataset.type = "target-box";
+                    targetBox.dataset.index = i;
+                    targetBox.dataset.answer = q.blanks[i];
+                    targetBox.ondragover = handleDragOver;
+                    targetBox.ondragleave = handleDragLeave;
+                    targetBox.ondrop = handleDrop;
+
+                    const slot = document.createElement('div');
+                    slot.className = "slot w-full";
+                    slot.dataset.type = "slot";
+                    targetBox.appendChild(slot);
+                    title.appendChild(targetBox);
                 }
             });
             wrapper.appendChild(title);
@@ -449,61 +519,121 @@
             title.className = "text-2xl text-gray-700 font-bold mb-10 text-center";
             title.innerText = q.question;
             wrapper.appendChild(title);
-
+            
             const list = document.createElement('div');
-            list.className = "grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto";
-
-            const shuffledItems = [...q.items].sort(() => Math.random() - 0.5);
-
-            shuffledItems.forEach((item, i) => {
+            // 若為三欄模式，使用 Grid 佈局均分寬度
+            list.className = q.isThreeColumns ? "grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto" : "grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto";
+            
+            const displayItems = q.randomPos ? shuffleArray([...q.items]) : [...q.items];
+            const currentAnswersOrder = displayItems.map(item => item.answer);
+            
+            displayItems.forEach((item, i) => {
                 const itemBox = document.createElement('div');
-                // 每個區塊使用不同色彩
-                let colorClass = `color-${i % 7}`;
-                if(q.colorSplit) {
-                    colorClass = (item.label.includes('網路') || item.label.includes('提供者')) ? 'color-4' : 'color-1';
-                }
+                let colorIdx = i % 3; 
+                let colorClass = `color-${colorIdx}`;
                 
-                itemBox.className = `${colorClass} p-5 pt-3 pb-4 rounded-3xl border-2 border-white shadow-sm flex flex-col gap-2 transition-all hover:scale-[1.02]`;
-                
-                const label = document.createElement('div');
-                label.className = "text-xl font-black text-center text-gray-800 text-balance min-h-[3rem] flex items-center justify-center";
-                label.innerText = item.label;
-                itemBox.appendChild(label);
+                if (q.isThreeColumns) {
+                    // 均分寬度設計：使用 w-full 撐滿 Grid 單元格
+                    itemBox.className = `${colorClass} drop-target-box p-5 rounded-3xl border-2 border-white shadow-md flex flex-col items-center gap-4 transition-all w-full h-full`;
+                    itemBox.dataset.type = "target-box";
+                    const originalIndex = q.items.findIndex(orig => orig.label === item.label);
+                    itemBox.dataset.index = originalIndex;
+                    itemBox.dataset.answer = item.answer;
+                    itemBox.ondragover = handleDragOver;
+                    itemBox.ondragleave = handleDragLeave;
+                    itemBox.ondrop = handleDrop;
 
-                // 找到原 index 為了對應 slot
-                const originalIndex = q.items.findIndex(orig => orig.label === item.label);
-                const slot = createSlot(originalIndex, item.answer);
-                slot.className += " w-full rounded-2xl py-4 bg-white/90 border-none text-xl shadow-inner";
-                itemBox.appendChild(slot);
+                    const label = document.createElement('div');
+                    // 移除 whitespace-nowrap 允許自動換行，並置中文字
+                    label.className = "text-lg font-black text-gray-800 text-center px-2 py-1 bg-white/30 rounded-lg pointer-events-none leading-relaxed flex-grow flex items-center";
+                    label.innerText = item.label;
+                    itemBox.appendChild(label);
+
+                    const slot = document.createElement('div');
+                    slot.className = "slot w-full rounded-2xl py-5 bg-white/80 border-none text-xl shadow-inner";
+                    slot.dataset.type = "slot";
+                    itemBox.appendChild(slot);
+                } else {
+                    itemBox.className = `${colorClass} drop-target-box p-5 pt-3 pb-4 rounded-3xl border-2 border-white shadow-sm flex flex-col gap-2 transition-all hover:scale-[1.02]`;
+                    itemBox.dataset.type = "target-box";
+                    const originalIndex = q.items.findIndex(orig => orig.label === item.label);
+                    itemBox.dataset.index = originalIndex;
+                    itemBox.dataset.answer = item.answer;
+                    itemBox.ondragover = handleDragOver;
+                    itemBox.ondragleave = handleDragLeave;
+                    itemBox.ondrop = handleDrop;
+
+                    const label = document.createElement('div');
+                    label.className = "text-xl font-black text-center text-gray-800 text-balance min-h-[3rem] flex items-center justify-center pointer-events-none";
+                    label.innerText = item.label;
+                    itemBox.appendChild(label);
+                    const slot = document.createElement('div');
+                    slot.className = "slot w-full rounded-2xl py-4 bg-white/90 border-none text-xl shadow-inner";
+                    slot.dataset.type = "slot";
+                    itemBox.appendChild(slot);
+                }
                 list.appendChild(itemBox);
             });
             wrapper.appendChild(list);
-            renderSourceArea(q.options, wrapper, true);
+            renderSourceArea(q.options, wrapper, true, q.customColorGroups, currentAnswersOrder);
         }
 
-        function createSlot(index, answer) {
-            const slot = document.createElement('div');
-            slot.className = "slot";
-            slot.dataset.type = "slot";
-            slot.dataset.index = index;
-            slot.dataset.answer = answer;
-            slot.ondragover = e => { e.preventDefault(); slot.classList.add('drag-over'); };
-            slot.ondragleave = () => slot.classList.remove('drag-over');
-            slot.ondrop = handleDrop;
-            return slot;
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
         }
 
-        function renderSourceArea(options, wrapper, forceColor) {
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const box = e.currentTarget;
+            box.classList.remove('drag-over');
+            
+            const elId = e.dataTransfer.getData("text/plain");
+            const el = document.getElementById(elId);
+            if (!el) return;
+
+            const slot = box.querySelector('.slot') || (box.dataset.type === 'slot' ? box : null);
+            if (slot) {
+                const existing = slot.querySelector('.macaron-btn');
+                if (existing) document.getElementById('source-area').appendChild(existing);
+                slot.appendChild(el);
+            } else if (box.id === 'source-area') {
+                box.appendChild(el);
+            }
+            saveState();
+        }
+
+        function renderSourceArea(options, wrapper, forceColor, useGroups = false, forbiddenOrder = null) {
             const sourceArea = document.createElement('div');
             sourceArea.className = "mt-12 p-8 bg-pink-50/30 rounded-3xl border-2 border-dashed border-pink-100 flex flex-wrap justify-center gap-4 min-h-[100px]";
             sourceArea.id = "source-area";
             sourceArea.dataset.type = "source";
             sourceArea.ondragover = e => e.preventDefault();
             sourceArea.ondrop = handleDrop;
-
-            const shuffled = [...options].sort(() => Math.random() - 0.5);
+            
+            let shuffled = shuffleArray([...options]);
+            
+            if (forbiddenOrder && shuffled.length > 1 && shuffled.length === forbiddenOrder.length) {
+                let attempts = 0;
+                while (attempts < 10) { 
+                    const isMatch = shuffled.every((val, index) => val === forbiddenOrder[index]);
+                    if (!isMatch) break;
+                    shuffled = shuffleArray([...shuffled]);
+                    attempts++;
+                }
+            }
+            
             shuffled.forEach((opt, idx) => {
-                const colorIdx = forceColor ? options.indexOf(opt) % 7 : idx % 7;
+                let colorIdx;
+                if (useGroups) {
+                    colorIdx = (idx % 3) + 3; 
+                } else {
+                    colorIdx = forceColor ? options.indexOf(opt) % 7 : idx % 7;
+                }
                 sourceArea.appendChild(createDragElement(opt, colorIdx));
             });
             wrapper.appendChild(sourceArea);
@@ -516,27 +646,14 @@
             el.id = "opt-" + Math.random().toString(36).substr(2, 9);
             el.draggable = true;
             el.dataset.value = text;
-            el.ondragstart = e => { e.dataTransfer.setData("text/plain", el.id); e.target.style.opacity = "0.5"; };
-            el.ondragend = e => { e.target.style.opacity = "1"; };
+            el.ondragstart = e => { 
+                e.dataTransfer.setData("text/plain", el.id); 
+                e.target.style.opacity = "0.5"; 
+            };
+            el.ondragend = e => { 
+                e.target.style.opacity = "1"; 
+            };
             return el;
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            const target = e.currentTarget;
-            target.classList.remove('drag-over');
-            const elId = e.dataTransfer.getData("text/plain");
-            const el = document.getElementById(elId);
-            if (!el) return;
-
-            if (target.dataset.type === "slot") {
-                const existing = target.querySelector('.macaron-btn');
-                if (existing) document.getElementById('source-area').appendChild(existing);
-                target.appendChild(el);
-            } else {
-                target.appendChild(el);
-            }
-            saveState();
         }
 
         function saveState() {
@@ -546,9 +663,9 @@
                 const selected = document.querySelector('.choice-card.selected');
                 if (selected) state.selected = selected.dataset.value;
             } else {
-                document.querySelectorAll('.slot').forEach(slot => {
-                    const item = slot.querySelector('.macaron-btn');
-                    if (item) state.values[slot.dataset.index] = { id: item.id, val: item.dataset.value };
+                document.querySelectorAll('.drop-target-box').forEach(box => {
+                    const item = box.querySelector('.macaron-btn');
+                    if (item) state.values[box.dataset.index] = { id: item.id, val: item.dataset.value };
                 });
             }
             userStates[currentIdx] = state;
@@ -566,14 +683,25 @@
             } else {
                 Object.keys(state.values).forEach(idx => {
                     const el = document.getElementById(state.values[idx].id);
-                    const slot = document.querySelector(`.slot[data-index="${idx}"]`);
-                    if (el && slot) slot.appendChild(el);
+                    const box = document.querySelector(`.drop-target-box[data-index="${idx}"]`);
+                    if (el && box) {
+                        const slot = box.querySelector('.slot');
+                        if (slot) slot.appendChild(el);
+                    }
                 });
             }
         }
 
         function navigate(dir) {
             saveState();
+            if (dir > 0 && !quizCheckedStatus[currentIdx]) {
+                showModal("溫馨提醒", "您這題還沒點擊『檢查答案』喔！要先檢查看看嗎？", "直接前往下一題", () => performNavigation(dir));
+                return;
+            }
+            performNavigation(dir);
+        }
+
+        function performNavigation(dir) {
             if (dir > 0 && currentIdx + dir < quizData.length) {
                 currentIdx += dir;
                 renderQuestion();
@@ -586,36 +714,69 @@
         }
 
         function checkAnswer() {
-            totalChecks++;
             const q = quizData[currentIdx];
-            let errors = 0;
             let incomplete = false;
 
             if (q.type === 'multiple_choice') {
                 const selected = userStates[currentIdx]?.selected;
-                if (!selected) { showToast("請選擇一個答案喔！", "error"); return; }
-                if (selected !== q.correct) errors++;
-                else {
+                if (!selected) { 
+                    showToast("請選擇一個答案喔！", "error"); 
+                    return; 
+                }
+                quizCheckedStatus[currentIdx] = true;
+                totalChecks++;
+                if (selected !== q.correct) {
+                    showToast(`還差一點點，加油！`, "error");
+                } else {
+                    showToast("🎉 太棒了！全部正確！", "success");
+                    quizPassedStatus[currentIdx] = true;
                     const winCard = document.querySelector('.choice-card.selected');
                     winCard.classList.add('winner-anim');
+                    updateProgressIndicators();
                     setTimeout(() => winCard.classList.remove('winner-anim'), 2000);
                 }
             } else {
-                const slots = document.querySelectorAll('.slot');
-                slots.forEach(slot => {
-                    const item = slot.querySelector('.macaron-btn');
+                const boxes = document.querySelectorAll('.drop-target-box');
+                
+                boxes.forEach(box => {
+                    const item = box.querySelector('.macaron-btn');
                     if (!item) incomplete = true;
-                    else if (item.dataset.value !== slot.dataset.answer) errors++;
                 });
-            }
 
-            if (incomplete) { showToast("還有空格沒填完喔！", "error"); return; }
-            if (errors === 0) {
-                showToast("🎉 太棒了！全部正確！", "success");
-                quizPassedStatus[currentIdx] = true;
-                updateProgressIndicators();
-            } else {
-                showToast(`還差一點點，加油！`, "error");
+                if (incomplete) {
+                    showToast("還有空格沒填完喔！請完成後再檢查。", "error");
+                    return; 
+                }
+
+                quizCheckedStatus[currentIdx] = true;
+                totalChecks++;
+                let errors = 0;
+                boxes.forEach(box => {
+                    const item = box.querySelector('.macaron-btn');
+                    if (item.dataset.value !== box.dataset.answer) {
+                        errors++;
+                        box.classList.add('error-hint');
+                        setTimeout(() => box.classList.remove('error-hint'), 1500);
+                    } else {
+                        box.classList.add('correct-hint');
+                        setTimeout(() => box.classList.remove('correct-hint'), 1500);
+                    }
+                });
+
+                if (errors === 0) {
+                    showToast("🎉 太棒了！全部正確！", "success");
+                    quizPassedStatus[currentIdx] = true;
+                    updateProgressIndicators();
+                } else {
+                    showToast(`還差一點點，加油！`, "error");
+                    if (q.shuffleOnError) {
+                        setTimeout(() => {
+                            delete userStates[currentIdx];
+                            renderQuestion();
+                            showToast("偵測到錯誤，系統已重新洗牌！", "error");
+                        }, 1000);
+                    }
+                }
             }
         }
 
@@ -633,9 +794,19 @@
             setTimeout(() => toast.style.opacity = "0", 2500);
         }
 
+        function handleRestart() {
+            let correctCount = Object.keys(quizPassedStatus).length;
+            if (correctCount === quizData.length) {
+                showModal("超強挑戰者！", "您已經全對了！在重置之前，您有截圖保存這份光榮的結果嗎？", "確認重置挑戰", restartQuiz);
+            } else {
+                restartQuiz();
+            }
+        }
+
         function restartQuiz() {
             userStates = {};
             quizPassedStatus = {};
+            quizCheckedStatus = {};
             totalChecks = 0;
             currentIdx = 0;
             document.getElementById('result-overlay').classList.add('hidden');
@@ -649,7 +820,6 @@
             const timerText = document.getElementById('timer').innerText;
             let correctCount = Object.keys(quizPassedStatus).length;
             const quote = inspirationalQuotes[Math.floor(Math.random() * inspirationalQuotes.length)];
-            
             document.getElementById('quote-zh').innerText = quote.zh;
             document.getElementById('quote-en').innerText = quote.en;
             document.getElementById('final-stats').innerHTML = `
@@ -661,10 +831,6 @@
                     <p class="text-lg text-gray-500">總用時：<span class="text-pink-500 font-bold">${timerText}</span> | 檢查次數：<span class="text-pink-500 font-bold">${totalChecks}</span></p>
                 </div>`;
             document.getElementById('result-overlay').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('modal-overlay').classList.add('hidden');
         }
     </script>
 </body>
