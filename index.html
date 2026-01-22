@@ -30,11 +30,7 @@
             box-shadow: 0 20px 50px rgba(244, 114, 182, 0.1);
         }
 
-        /* 讓按鈕內的文字不影響點擊判定 */
-        button *, .macaron-btn *, .choice-card *, .progress-circle * {
-            pointer-events: none;
-        }
-
+        /* 核心互動修正：確保方塊本身可點擊，但內部文字不干擾 */
         .macaron-btn {
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: grab;
@@ -42,6 +38,11 @@
             align-items: center;
             justify-content: center;
             user-select: none;
+            pointer-events: auto !important; /* 強制方塊可被抓取 */
+        }
+        
+        .macaron-btn * {
+            pointer-events: none; /* 防止內部文字干擾拖曳 */
         }
 
         .macaron-btn:active {
@@ -60,18 +61,27 @@
             border: 2px dashed rgba(0, 0, 0, 0.05);
             font-weight: bold;
             position: relative;
-            pointer-events: none; 
+            pointer-events: none; /* 讓空槽位不阻擋 Drop 事件傳給父層 TargetBox */
         }
 
         .drop-target-box {
             transition: all 0.3s ease;
             position: relative;
+            pointer-events: auto; /* 確保感應區可接收 Drop */
         }
         
         .drop-target-box.drag-over {
             transform: scale(1.03);
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
             filter: brightness(1.05);
+        }
+
+        /* 按鈕全區域點擊判定 */
+        button, .choice-card, .progress-circle {
+            pointer-events: auto;
+        }
+        button *, .choice-card *, .progress-circle * {
+            pointer-events: none;
         }
 
         /* 顏色類別 */
@@ -217,18 +227,17 @@
         const quizData = [
             {
                 type: 'matching_fixed',
-                question: "請根據網路發展史，排列正確的順序：",
+                question: "請根據網路發展史，由遠到近排列正確的順序：",
                 options: ["ARPANET", "TCP/IP", "網域名稱服務", "WWW+瀏覽器", "TANet"],
                 steps: [
-                    { type: 'fixed', name: "以前", desc: "起點" },
                     { type: 'slot', answer: "ARPANET", desc: "網際網路雛形" },
                     { type: 'slot', answer: "TCP/IP", desc: "共同通訊語言" },
                     { type: 'slot', answer: "網域名稱服務", desc: "IP轉易記網址" },
                     { type: 'slot', answer: "WWW+瀏覽器", desc: "圖形化介面普及" },
-                    { type: 'slot', answer: "TANet", desc: "臺灣學術網路" },
-                    { type: 'fixed', name: "現在", desc: "現況" }
+                    { type: 'slot', answer: "TANet", desc: "臺灣學術網路" }
                 ],
-                forceColor: true
+                forceColor: true,
+                shuffleOnError: true 
             },
             {
                 type: 'multiple_choice',
@@ -247,7 +256,8 @@
                 question: "[__]是透過有線或無線的[__]，將許多電腦或硬體設備[__]起來，讓彼此可以互相[__]的技術。",
                 blanks: ["網路", "傳輸媒介", "連接", "傳遞資訊"],
                 options: ["網路", "傳輸媒介", "連接", "傳遞資訊"],
-                forceColor: true
+                forceColor: true,
+                shuffleOnError: true
             },
             {
                 type: 'matching_list',
@@ -262,7 +272,8 @@
                 ],
                 options: ["Network", "ARPANET", "TCP/IP", "WWW", "TANet", "ISP"],
                 randomPos: true,
-                customColorGroups: true
+                customColorGroups: true,
+                shuffleOnError: true
             },
             {
                 type: 'matching_fixed',
@@ -275,7 +286,8 @@
                     { type: 'slot', answer: "光纖" },
                     { type: 'fixed', name: "快" }
                 ],
-                forceColor: true
+                forceColor: true,
+                shuffleOnError: true
             },
             {
                 type: 'matching_fixed',
@@ -288,7 +300,8 @@
                     { type: 'slot', answer: "雙絞線" },
                     { type: 'fixed', name: "近" }
                 ],
-                forceColor: true
+                forceColor: true,
+                shuffleOnError: true
             },
             {
                 type: 'matching_list',
@@ -322,7 +335,7 @@
 
         const inspirationalQuotes = [
             { en: "Connection is the energy that exists between people.", zh: "連結是人與人之間存在的能量。" },
-            { en: "Believe you can and you're halfway there.", zh: "相信自己能做到，你就已經成功了一半。" },
+            { en: "Believe you can and you're halfway there.", zh: "成功是每天反覆努力的小成果積累而成的。" },
             { en: "Stay curious, keep connecting.", zh: "保持好奇，持續連結。" }
         ];
 
@@ -425,18 +438,23 @@
             
             q.steps.forEach((step, idx) => {
                 const item = document.createElement('div');
-                item.className = "flex flex-col items-center gap-1 drop-target-box rounded-2xl p-2";
-                item.dataset.type = "target-box";
-                item.dataset.index = idx;
-                item.dataset.answer = step.answer || "";
-                item.ondragover = handleDragOver;
-                item.ondragleave = handleDragLeave;
-                item.ondrop = handleDrop;
+                if (step.type === 'slot') {
+                    item.className = "flex flex-col items-center gap-1 drop-target-box rounded-2xl p-2";
+                    item.dataset.type = "target-box";
+                    item.dataset.index = idx;
+                    item.dataset.answer = step.answer || "";
+                    item.ondragover = handleDragOver;
+                    item.ondragleave = handleDragLeave;
+                    item.ondrop = handleDrop;
+                } else {
+                    item.className = "flex flex-col items-center gap-1 p-2";
+                }
 
                 const desc = document.createElement('p');
                 desc.className = "text-xs text-pink-400 font-bold h-6 pointer-events-none";
                 desc.innerText = step.desc || "";
                 item.appendChild(desc);
+
                 if (step.type === 'fixed') {
                     const fixed = document.createElement('div');
                     fixed.className = "fixed-block px-5 py-5 rounded-xl font-bold text-gray-400 text-xl bg-gray-50 whitespace-nowrap pointer-events-none";
@@ -457,7 +475,9 @@
                 }
             });
             wrapper.appendChild(flow);
-            renderSourceArea(q.options, wrapper, q.forceColor);
+            
+            const currentAnswersOrder = q.steps.filter(s => s.type === 'slot').map(s => s.answer);
+            renderSourceArea(q.options, wrapper, q.forceColor, false, currentAnswersOrder);
         }
 
         function renderMultipleChoice(q, wrapper) {
@@ -511,7 +531,7 @@
                 }
             });
             wrapper.appendChild(title);
-            renderSourceArea(q.options, wrapper, q.forceColor);
+            renderSourceArea(q.options, wrapper, q.forceColor, false, q.blanks);
         }
 
         function renderMatchingList(q, wrapper) {
@@ -521,7 +541,6 @@
             wrapper.appendChild(title);
             
             const list = document.createElement('div');
-            // 若為三欄模式，使用 Grid 佈局均分寬度
             list.className = q.isThreeColumns ? "grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto" : "grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto";
             
             const displayItems = q.randomPos ? shuffleArray([...q.items]) : [...q.items];
@@ -533,7 +552,6 @@
                 let colorClass = `color-${colorIdx}`;
                 
                 if (q.isThreeColumns) {
-                    // 均分寬度設計：使用 w-full 撐滿 Grid 單元格
                     itemBox.className = `${colorClass} drop-target-box p-5 rounded-3xl border-2 border-white shadow-md flex flex-col items-center gap-4 transition-all w-full h-full`;
                     itemBox.dataset.type = "target-box";
                     const originalIndex = q.items.findIndex(orig => orig.label === item.label);
@@ -544,7 +562,6 @@
                     itemBox.ondrop = handleDrop;
 
                     const label = document.createElement('div');
-                    // 移除 whitespace-nowrap 允許自動換行，並置中文字
                     label.className = "text-lg font-black text-gray-800 text-center px-2 py-1 bg-white/30 rounded-lg pointer-events-none leading-relaxed flex-grow flex items-center";
                     label.innerText = item.label;
                     itemBox.appendChild(label);
@@ -596,13 +613,16 @@
             const el = document.getElementById(elId);
             if (!el) return;
 
-            const slot = box.querySelector('.slot') || (box.dataset.type === 'slot' ? box : null);
-            if (slot) {
-                const existing = slot.querySelector('.macaron-btn');
-                if (existing) document.getElementById('source-area').appendChild(existing);
-                slot.appendChild(el);
-            } else if (box.id === 'source-area') {
+            // 判定掉落地點是 Slot 還是 SourceArea
+            if (box.id === 'source-area') {
                 box.appendChild(el);
+            } else {
+                const slot = box.querySelector('.slot') || (box.dataset.type === 'slot' ? box : null);
+                if (slot) {
+                    const existing = slot.querySelector('.macaron-btn');
+                    if (existing) document.getElementById('source-area').appendChild(existing);
+                    slot.appendChild(el);
+                }
             }
             saveState();
         }
@@ -768,13 +788,13 @@
                     quizPassedStatus[currentIdx] = true;
                     updateProgressIndicators();
                 } else {
-                    showToast(`還差一點點，加油！`, "error");
+                    showToast(`還差一點點，答案將重新歸位，請再試一次！`, "error");
                     if (q.shuffleOnError) {
                         setTimeout(() => {
                             delete userStates[currentIdx];
                             renderQuestion();
                             showToast("偵測到錯誤，系統已重新洗牌！", "error");
-                        }, 1000);
+                        }, 1200);
                     }
                 }
             }
