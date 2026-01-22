@@ -30,7 +30,7 @@
             box-shadow: 0 20px 50px rgba(244, 114, 182, 0.1);
         }
 
-        /* 核心互動修正：確保方塊本身可點擊，但內部文字不干擾 */
+        /* 核心互動：確保方塊本身可點擊，寬度自適應文字長度 */
         .macaron-btn {
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: grab;
@@ -38,11 +38,13 @@
             align-items: center;
             justify-content: center;
             user-select: none;
-            pointer-events: auto !important; /* 強制方塊可被抓取 */
+            pointer-events: auto !important;
+            width: auto; /* 改為寬度自適應 */
+            min-width: 120px; /* 設定最小寬度避免太窄 */
         }
         
         .macaron-btn * {
-            pointer-events: none; /* 防止內部文字干擾拖曳 */
+            pointer-events: none;
         }
 
         .macaron-btn:active {
@@ -61,13 +63,14 @@
             border: 2px dashed rgba(0, 0, 0, 0.05);
             font-weight: bold;
             position: relative;
-            pointer-events: none; /* 讓空槽位不阻擋 Drop 事件傳給父層 TargetBox */
+            pointer-events: none; 
+            width: 100%;
         }
 
         .drop-target-box {
             transition: all 0.3s ease;
             position: relative;
-            pointer-events: auto; /* 確保感應區可接收 Drop */
+            pointer-events: auto;
         }
         
         .drop-target-box.drag-over {
@@ -233,7 +236,7 @@
                     { type: 'slot', answer: "ARPANET", desc: "網際網路雛形" },
                     { type: 'slot', answer: "TCP/IP", desc: "共同通訊語言" },
                     { type: 'slot', answer: "網域名稱服務", desc: "IP轉易記網址" },
-                    { type: 'slot', answer: "WWW+瀏覽器", desc: "圖形化介面普及" },
+                    { type: 'slot', answer: "WWW+瀏覽器", desc: "網路資料多元化" },
                     { type: 'slot', answer: "TANet", desc: "臺灣學術網路" }
                 ],
                 forceColor: true,
@@ -433,13 +436,14 @@
             title.className = "text-2xl text-gray-700 font-bold mb-10 text-center";
             title.innerText = q.question;
             wrapper.appendChild(title);
+            
             const flow = document.createElement('div');
-            flow.className = "flex flex-wrap justify-center gap-4 items-start";
+            flow.className = "flex flex-row items-start justify-center w-full gap-1 max-w-5xl mx-auto";
             
             q.steps.forEach((step, idx) => {
                 const item = document.createElement('div');
                 if (step.type === 'slot') {
-                    item.className = "flex flex-col items-center gap-1 drop-target-box rounded-2xl p-2";
+                    item.className = "flex-1 flex flex-col items-center drop-target-box rounded-2xl p-1";
                     item.dataset.type = "target-box";
                     item.dataset.index = idx;
                     item.dataset.answer = step.answer || "";
@@ -447,30 +451,31 @@
                     item.ondragleave = handleDragLeave;
                     item.ondrop = handleDrop;
                 } else {
-                    item.className = "flex flex-col items-center gap-1 p-2";
+                    item.className = "flex-1 flex flex-col items-center p-1";
                 }
 
                 const desc = document.createElement('p');
-                desc.className = "text-xs text-pink-400 font-bold h-6 pointer-events-none";
+                desc.className = "text-xs text-pink-400 font-bold h-6 pointer-events-none mb-1 text-center";
                 desc.innerText = step.desc || "";
                 item.appendChild(desc);
 
                 if (step.type === 'fixed') {
                     const fixed = document.createElement('div');
-                    fixed.className = "fixed-block px-5 py-5 rounded-xl font-bold text-gray-400 text-xl bg-gray-50 whitespace-nowrap pointer-events-none";
+                    fixed.className = "fixed-block w-full py-5 rounded-xl font-bold text-gray-400 text-xl bg-gray-50 whitespace-nowrap pointer-events-none text-center";
                     fixed.innerText = step.name;
                     item.appendChild(fixed);
                 } else {
                     const slot = document.createElement('div');
-                    slot.className = "slot px-4 py-6 rounded-xl border-2 text-xl bg-white min-w-[120px]";
+                    slot.className = "slot w-full py-6 rounded-xl border-2 text-xl bg-white";
                     slot.dataset.type = "slot";
                     item.appendChild(slot);
                 }
                 flow.appendChild(item);
+                
                 if (idx < q.steps.length - 1) {
                     const arrowWrap = document.createElement('div');
-                    arrowWrap.className = "pt-12 hidden md:block pointer-events-none";
-                    arrowWrap.innerHTML = "<span class='text-gray-300 font-bold text-xl'>➜</span>";
+                    arrowWrap.className = "pt-12 flex-shrink-0 text-gray-300 font-bold text-lg pointer-events-none";
+                    arrowWrap.innerHTML = "➜";
                     flow.appendChild(arrowWrap);
                 }
             });
@@ -613,7 +618,6 @@
             const el = document.getElementById(elId);
             if (!el) return;
 
-            // 判定掉落地點是 Slot 還是 SourceArea
             if (box.id === 'source-area') {
                 box.appendChild(el);
             } else {
@@ -661,7 +665,8 @@
 
         function createDragElement(text, colorIdx) {
             const el = document.createElement('div');
-            el.className = `macaron-btn color-${colorIdx} px-6 py-2 rounded-xl shadow-md font-bold text-gray-700 border-2 border-white/50 text-xl whitespace-nowrap`;
+            // px-6 提供略寬於文字的間距，w-fit 確保不強制展開
+            el.className = `macaron-btn color-${colorIdx} px-6 py-2 rounded-xl shadow-md font-bold text-gray-700 border-2 border-white/50 text-xl whitespace-nowrap w-fit`;
             el.innerText = text;
             el.id = "opt-" + Math.random().toString(36).substr(2, 9);
             el.draggable = true;
