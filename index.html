@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>9下2-1.1認識網路(網路的連接)</title>
+    <title>9下2-1.1認識網路(網路的連接) - 教學版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -19,7 +19,7 @@
 
         body {
             font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
-            background-color: #fff1f2; /* 粉紅馬卡龍背景 */
+            background-color: #fff1f2;
             overflow-x: hidden;
         }
 
@@ -30,7 +30,7 @@
             box-shadow: 0 20px 50px rgba(244, 114, 182, 0.1);
         }
 
-        /* 核心互動：確保方塊本身可點擊，寬度自適應文字長度 */
+        /* 核心互動方塊 */
         .macaron-btn {
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: grab;
@@ -39,8 +39,6 @@
             justify-content: center;
             user-select: none;
             pointer-events: auto !important;
-            width: auto; /* 改為寬度自適應 */
-            min-width: 120px; /* 設定最小寬度避免太窄 */
         }
         
         .macaron-btn * {
@@ -52,9 +50,30 @@
             transform: scale(0.95);
         }
 
+        /* 第一題專用樣式 */
+        .q1-btn-style {
+            width: 155px !important;
+            height: 52px !important; 
+            padding-left: 0.5rem !important; 
+            padding-right: 0.5rem !important; 
+        }
+
+        /* 標籤通用樣式：第四、七、八題 */
+        .q-compact-label {
+            width: 92% !important; 
+            padding-left: 0.75rem !important; 
+            padding-right: 0.75rem !important; 
+            white-space: normal !important; 
+            min-height: 3rem !important; 
+            font-size: 1rem !important;
+            display: flex;
+            align-items: center;
+            line-height: 1.4;
+            border-radius: 12px;
+        }
+
         .slot {
             transition: all 0.3s ease;
-            min-height: 3.5rem;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -65,6 +84,27 @@
             position: relative;
             pointer-events: none; 
             width: 100%;
+        }
+
+        /* 第一題 Slot 樣式 */
+        .q1-slot-style {
+            height: 52px !important;
+            min-width: 155px !important;
+        }
+
+        /* 通用固定高度 Slot (第三至八題) */
+        .q-fixed-height-slot {
+            height: 48px !important;
+            min-height: 48px !important;
+            border-radius: 12px !important;
+        }
+
+        /* 第三題句子中的格位寬度優化 */
+        .q3-slot-inline {
+            width: auto !important;
+            min-width: 130px !important;
+            margin: 0 4px;
+            display: inline-flex;
         }
 
         .drop-target-box {
@@ -79,7 +119,6 @@
             filter: brightness(1.05);
         }
 
-        /* 按鈕全區域點擊判定 */
         button, .choice-card, .progress-circle {
             pointer-events: auto;
         }
@@ -87,7 +126,7 @@
             pointer-events: none;
         }
 
-        /* 顏色類別 */
+        /* 顏色定義 */
         .color-0 { background-color: var(--macaron-pink); }
         .color-1 { background-color: var(--macaron-orange); }
         .color-2 { background-color: var(--macaron-yellow); }
@@ -186,6 +225,7 @@
             </div>
         </footer>
 
+        <!-- 自定義彈窗 (Modal) -->
         <div id="modal-overlay" class="fixed inset-0 bg-black/40 z-[300] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
             <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl transform scale-90 transition-transform duration-300" id="modal-content">
                 <div class="text-4xl mb-4 text-center" id="modal-icon">💡</div>
@@ -202,6 +242,14 @@
             <div class="border-4 border-pink-200 rounded-3xl p-8 max-w-3xl w-full bg-white shadow-xl my-8">
                 <h2 class="text-3xl font-bold text-pink-500 mb-6 text-center text-balance">📝 測驗挑戰結果</h2>
                 <div id="final-stats" class="space-y-4 mb-8"></div>
+                
+                <div class="mb-8">
+                    <h4 class="text-gray-500 text-sm font-bold mb-4 flex items-center gap-2">
+                        <span class="w-1 h-4 bg-pink-400 rounded-full"></span> 各題嘗試次數統計
+                    </h4>
+                    <div id="check-breakdown" class="grid grid-cols-4 md:grid-cols-8 gap-2"></div>
+                </div>
+
                 <div class="bg-pink-50 p-6 rounded-2xl mb-8 text-center border border-pink-100">
                     <div id="quote-zh" class="text-xl font-bold text-pink-600 mb-3 text-balance"></div>
                     <div id="quote-en" class="text-base italic text-pink-400 leading-relaxed text-balance"></div>
@@ -216,7 +264,6 @@
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 px-8 py-4 rounded-full bg-gray-800 text-white font-bold opacity-0 transition-opacity pointer-events-none z-[600] text-xl shadow-lg"></div>
 
     <script>
-        // 洗牌演算法
         function shuffleArray(array) {
             let currentIndex = array.length, randomIndex;
             while (currentIndex !== 0) {
@@ -233,14 +280,15 @@
                 question: "請根據網路發展史，由遠到近排列正確的順序：",
                 options: ["ARPANET", "TCP/IP", "網域名稱服務", "WWW+瀏覽器", "TANet"],
                 steps: [
-                    { type: 'slot', answer: "ARPANET", desc: "網際網路雛形" },
-                    { type: 'slot', answer: "TCP/IP", desc: "共同通訊語言" },
-                    { type: 'slot', answer: "網域名稱服務", desc: "IP轉易記網址" },
-                    { type: 'slot', answer: "WWW+瀏覽器", desc: "網路資料多元化" },
-                    { type: 'slot', answer: "TANet", desc: "臺灣學術網路" }
+                    { type: 'slot', answer: "ARPANET", desc: "解決戰時通訊被阻斷的危機" },
+                    { type: 'slot', answer: "TCP/IP", desc: "解決不同電腦系統通訊困境" },
+                    { type: 'slot', answer: "網域名稱服務", desc: "解決IP不易記憶問題" },
+                    { type: 'slot', answer: "WWW+瀏覽器", desc: "讓網路資料能更多元化" },
+                    { type: 'slot', answer: "TANet", desc: "臺灣學術網路起點" }
                 ],
                 forceColor: true,
-                shuffleOnError: true 
+                shuffleOnError: true,
+                isQuestionOne: true 
             },
             {
                 type: 'multiple_choice',
@@ -255,8 +303,9 @@
                 theme: "pink"
             },
             {
-                type: 'drag_and_drop',
-                question: "[__]是透過有線或無線的[__]，將許多電腦或硬體設備[__]起來，讓彼此可以互相[__]的技術。",
+                type: 'drag_and_drop_slot', 
+                question: "請填入正確的網路定義敘述：",
+                parts: ["", "是透過有線或無線的", "，將許多電腦或硬體設備", "起來，讓彼此可以互相", "的技術。"],
                 blanks: ["網路", "傳輸媒介", "連接", "傳遞資訊"],
                 options: ["網路", "傳輸媒介", "連接", "傳遞資訊"],
                 forceColor: true,
@@ -276,11 +325,13 @@
                 options: ["Network", "ARPANET", "TCP/IP", "WWW", "TANet", "ISP"],
                 randomPos: true,
                 customColorGroups: true,
-                shuffleOnError: true
+                shuffleOnError: true,
+                isQuestionFour: true,
+                isThreeColumns: true 
             },
             {
                 type: 'matching_fixed',
-                question: "請由「慢」到「快」排列有線傳輸媒介速度：",
+                question: "請依「傳輸速度」排列：",
                 options: ["雙絞線", "同軸電纜線", "光纖"],
                 steps: [
                     { type: 'fixed', name: "慢" },
@@ -290,11 +341,12 @@
                     { type: 'fixed', name: "快" }
                 ],
                 forceColor: true,
-                shuffleOnError: true
+                shuffleOnError: true,
+                isFixedSlotQuestion: true 
             },
             {
                 type: 'matching_fixed',
-                question: "請依傳輸距離「遠」到「近」排列有線傳輸媒介：",
+                question: "請依傳輸距離排列：",
                 options: ["光纖", "同軸電纜線", "雙絞線"],
                 steps: [
                     { type: 'fixed', name: "遠" },
@@ -304,7 +356,8 @@
                     { type: 'fixed', name: "近" }
                 ],
                 forceColor: true,
-                shuffleOnError: true
+                shuffleOnError: true,
+                isFixedSlotQuestion: true 
             },
             {
                 type: 'matching_list',
@@ -312,11 +365,12 @@
                 items: [
                     { label: "朋友借住家裡二樓兩天，有上網的需求，但二樓沒有網路，最近的網路設備在三樓，速度不要求，可以上網就好", answer: "雙絞線" },
                     { label: "工廠辦公室人太多坐不下，在直線50公尺處，新增一間辦公室，想串連舊辦公室的網路，佈線路徑會經過很多高功率的機器", answer: "同軸電纜線" },
-                    { label: "光復國中操場的司令台想要安排一個快速又穩定的有線網路節點，但最近的網路設備在電腦教室", answer: "光纖" }
+                    { label: "操場司令台想安排一個快速穩定的網路節點，但最近的設備在電腦教室", answer: "光纖" }
                 ],
                 options: ["雙絞線", "同軸電纜線", "光纖"],
                 randomPos: true,
                 shuffleOnError: true,
+                isQuestionSeven: true, 
                 isThreeColumns: true, 
                 customColorGroups: true
             },
@@ -331,15 +385,10 @@
                 options: ["數據機", "路由器", "網路交換器"],
                 randomPos: true,
                 shuffleOnError: true,
+                isQuestionEight: true, 
                 isThreeColumns: true, 
                 customColorGroups: true
             }
-        ];
-
-        const inspirationalQuotes = [
-            { en: "Connection is the energy that exists between people.", zh: "連結是人與人之間存在的能量。" },
-            { en: "Believe you can and you're halfway there.", zh: "成功是每天反覆努力的小成果積累而成的。" },
-            { en: "Stay curious, keep connecting.", zh: "保持好奇，持續連結。" }
         ];
 
         let currentIdx = 0;
@@ -347,8 +396,15 @@
         let quizCheckedStatus = {}; 
         let quizPassedStatus = {}; 
         let totalChecks = 0; 
+        let questionCheckCounts = {}; 
         let startTime = Date.now();
         let timerInterval = null;
+
+        const inspirationalQuotes = [
+            { en: "Connection is the energy that exists between people.", zh: "連結是人與人之間存在的能量。" },
+            { en: "Believe you can and you're halfway there.", zh: "成功是每天反覆努力的小成果積累而成的。" },
+            { en: "Stay curious, keep connecting.", zh: "保持好奇，持續連結。" }
+        ];
 
         window.onload = () => {
             initIndicators();
@@ -423,7 +479,7 @@
 
             if (q.type === 'matching_fixed') renderMatchingFixed(q, wrapper);
             else if (q.type === 'multiple_choice') renderMultipleChoice(q, wrapper);
-            else if (q.type === 'drag_and_drop') renderDragAndDrop(q, wrapper);
+            else if (q.type === 'drag_and_drop_slot') renderDragAndDropSlot(q, wrapper);
             else if (q.type === 'matching_list') renderMatchingList(q, wrapper);
 
             container.appendChild(wrapper);
@@ -435,11 +491,10 @@
             const title = document.createElement('h3');
             title.className = "text-2xl text-gray-700 font-bold mb-10 text-center";
             title.innerText = q.question;
-            wrapper.appendChild(title);
-            
+            wrapper.appendChild(title); // 修正：加入這行確保題目顯示
+
             const flow = document.createElement('div');
             flow.className = "flex flex-row items-start justify-center w-full gap-1 max-w-5xl mx-auto";
-            
             q.steps.forEach((step, idx) => {
                 const item = document.createElement('div');
                 if (step.type === 'slot') {
@@ -453,12 +508,10 @@
                 } else {
                     item.className = "flex-1 flex flex-col items-center p-1";
                 }
-
                 const desc = document.createElement('p');
                 desc.className = "text-xs text-pink-400 font-bold h-6 pointer-events-none mb-1 text-center";
                 desc.innerText = step.desc || "";
                 item.appendChild(desc);
-
                 if (step.type === 'fixed') {
                     const fixed = document.createElement('div');
                     fixed.className = "fixed-block w-full py-5 rounded-xl font-bold text-gray-400 text-xl bg-gray-50 whitespace-nowrap pointer-events-none text-center";
@@ -466,12 +519,16 @@
                     item.appendChild(fixed);
                 } else {
                     const slot = document.createElement('div');
-                    slot.className = "slot w-full py-6 rounded-xl border-2 text-xl bg-white";
+                    let slotClass = "slot w-full rounded-xl border-2 text-xl bg-white";
+                    if (q.isQuestionOne) slotClass += " q1-slot-style";
+                    else if (q.isFixedSlotQuestion) slotClass += " q-fixed-height-slot";
+                    else slotClass += " py-6"; 
+
+                    slot.className = slotClass;
                     slot.dataset.type = "slot";
                     item.appendChild(slot);
                 }
                 flow.appendChild(item);
-                
                 if (idx < q.steps.length - 1) {
                     const arrowWrap = document.createElement('div');
                     arrowWrap.className = "pt-12 flex-shrink-0 text-gray-300 font-bold text-lg pointer-events-none";
@@ -480,9 +537,8 @@
                 }
             });
             wrapper.appendChild(flow);
-            
             const currentAnswersOrder = q.steps.filter(s => s.type === 'slot').map(s => s.answer);
-            renderSourceArea(q.options, wrapper, q.forceColor, false, currentAnswersOrder);
+            renderSourceArea(q.options, wrapper, q.forceColor, false, currentAnswersOrder, q.isQuestionOne);
         }
 
         function renderMultipleChoice(q, wrapper) {
@@ -492,9 +548,7 @@
             wrapper.appendChild(title);
             const grid = document.createElement('div');
             grid.className = "grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto";
-            
             const shuffledOptions = shuffleArray([...q.options]);
-            
             shuffledOptions.forEach((opt, i) => {
                 const card = document.createElement('div');
                 card.className = `choice-card bg-white border-4 border-white p-6 rounded-3xl shadow-sm flex items-center justify-center gap-6 hover:bg-pink-50`;
@@ -510,17 +564,24 @@
             wrapper.appendChild(grid);
         }
 
-        function renderDragAndDrop(q, wrapper) {
+        function renderDragAndDropSlot(q, wrapper) {
             const title = document.createElement('h3');
-            title.className = "text-2xl text-gray-700 font-bold mb-12 leading-relaxed text-left px-8 flex flex-wrap items-center gap-x-2 gap-y-4";
-            const parts = q.question.split('[__]');
-            parts.forEach((part, i) => {
-                const pNode = document.createElement('span');
-                pNode.innerText = part;
-                title.appendChild(pNode);
-                if (i < parts.length - 1) {
+            title.className = "text-2xl text-gray-700 font-bold mb-10 text-center";
+            title.innerText = q.question;
+            wrapper.appendChild(title);
+
+            const sentence = document.createElement('div');
+            sentence.className = "text-xl md:text-2xl text-gray-800 leading-[4rem] text-center flex flex-wrap justify-center items-center gap-y-4 px-4";
+            
+            q.parts.forEach((part, i) => {
+                if (part) {
+                    const span = document.createElement('span');
+                    span.innerText = part;
+                    sentence.appendChild(span);
+                }
+                if (i < q.blanks.length) {
                     const targetBox = document.createElement('div');
-                    targetBox.className = "drop-target-box inline-flex items-center justify-center min-w-[120px] px-2 py-1 border-b-4 border-pink-200 bg-pink-50/20 rounded-t-lg transition-all";
+                    targetBox.className = "drop-target-box inline-flex items-center justify-center transition-all q3-slot-inline";
                     targetBox.dataset.type = "target-box";
                     targetBox.dataset.index = i;
                     targetBox.dataset.answer = q.blanks[i];
@@ -529,75 +590,77 @@
                     targetBox.ondrop = handleDrop;
 
                     const slot = document.createElement('div');
-                    slot.className = "slot w-full";
+                    slot.className = "slot q-fixed-height-slot bg-white border-2 border-dashed border-pink-200 shadow-inner w-full";
                     slot.dataset.type = "slot";
                     targetBox.appendChild(slot);
-                    title.appendChild(targetBox);
+                    sentence.appendChild(targetBox);
                 }
             });
-            wrapper.appendChild(title);
+            wrapper.appendChild(sentence);
             renderSourceArea(q.options, wrapper, q.forceColor, false, q.blanks);
         }
 
         function renderMatchingList(q, wrapper) {
             const title = document.createElement('h3');
-            title.className = "text-2xl text-gray-700 font-bold mb-10 text-center";
+            title.className = "text-2xl text-gray-700 font-bold mb-8 text-center";
             title.innerText = q.question;
             wrapper.appendChild(title);
             
-            const list = document.createElement('div');
-            list.className = q.isThreeColumns ? "grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto" : "grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto";
-            
             const displayItems = q.randomPos ? shuffleArray([...q.items]) : [...q.items];
             const currentAnswersOrder = displayItems.map(item => item.answer);
-            
-            displayItems.forEach((item, i) => {
+
+            const createItemBox = (item, i) => {
                 const itemBox = document.createElement('div');
                 let colorIdx = i % 3; 
                 let colorClass = `color-${colorIdx}`;
+                const isCompact = (q.isQuestionFour || q.isQuestionEight || q.isQuestionSeven);
+                const boxPadding = isCompact ? "p-2 gap-1.5" : "p-5 gap-4";
                 
-                if (q.isThreeColumns) {
-                    itemBox.className = `${colorClass} drop-target-box p-5 rounded-3xl border-2 border-white shadow-md flex flex-col items-center gap-4 transition-all w-full h-full`;
-                    itemBox.dataset.type = "target-box";
-                    const originalIndex = q.items.findIndex(orig => orig.label === item.label);
-                    itemBox.dataset.index = originalIndex;
-                    itemBox.dataset.answer = item.answer;
-                    itemBox.ondragover = handleDragOver;
-                    itemBox.ondragleave = handleDragLeave;
-                    itemBox.ondrop = handleDrop;
+                itemBox.className = `${colorClass} drop-target-box ${boxPadding} rounded-3xl border-2 border-white shadow-md flex flex-col items-center transition-all h-full w-full`;
+                itemBox.dataset.type = "target-box";
+                const originalIndex = q.items.findIndex(orig => orig.label === item.label);
+                itemBox.dataset.index = originalIndex;
+                itemBox.dataset.answer = item.answer;
+                itemBox.ondragover = handleDragOver;
+                itemBox.ondragleave = handleDragLeave;
+                itemBox.ondrop = handleDrop;
 
-                    const label = document.createElement('div');
-                    label.className = "text-lg font-black text-gray-800 text-center px-2 py-1 bg-white/30 rounded-lg pointer-events-none leading-relaxed flex-grow flex items-center";
-                    label.innerText = item.label;
-                    itemBox.appendChild(label);
-
-                    const slot = document.createElement('div');
-                    slot.className = "slot w-full rounded-2xl py-5 bg-white/80 border-none text-xl shadow-inner";
-                    slot.dataset.type = "slot";
-                    itemBox.appendChild(slot);
+                const label = document.createElement('div');
+                if (isCompact) {
+                    const alignClass = q.isQuestionSeven ? "text-left justify-start px-4" : "text-center justify-center";
+                    label.className = `text-xl font-black text-gray-800 bg-white/30 pointer-events-none flex items-center q-compact-label ${alignClass}`;
                 } else {
-                    itemBox.className = `${colorClass} drop-target-box p-5 pt-3 pb-4 rounded-3xl border-2 border-white shadow-sm flex flex-col gap-2 transition-all hover:scale-[1.02]`;
-                    itemBox.dataset.type = "target-box";
-                    const originalIndex = q.items.findIndex(orig => orig.label === item.label);
-                    itemBox.dataset.index = originalIndex;
-                    itemBox.dataset.answer = item.answer;
-                    itemBox.ondragover = handleDragOver;
-                    itemBox.ondragleave = handleDragLeave;
-                    itemBox.ondrop = handleDrop;
-
-                    const label = document.createElement('div');
-                    label.className = "text-xl font-black text-center text-gray-800 text-balance min-h-[3rem] flex items-center justify-center pointer-events-none";
-                    label.innerText = item.label;
-                    itemBox.appendChild(label);
-                    const slot = document.createElement('div');
-                    slot.className = "slot w-full rounded-2xl py-4 bg-white/90 border-none text-xl shadow-inner";
-                    slot.dataset.type = "slot";
-                    itemBox.appendChild(slot);
+                    label.className = "text-lg font-black text-gray-800 text-center px-2 py-1 bg-white/30 rounded-lg pointer-events-none leading-relaxed flex-grow flex items-center";
                 }
-                list.appendChild(itemBox);
-            });
-            wrapper.appendChild(list);
-            renderSourceArea(q.options, wrapper, true, q.customColorGroups, currentAnswersOrder);
+                label.innerText = item.label;
+                itemBox.appendChild(label);
+
+                const slot = document.createElement('div');
+                const slotClass = isCompact ? "slot q-fixed-height-slot bg-white/80 border-none text-xl shadow-inner width-[92%]" : "slot w-full rounded-2xl py-5 bg-white/80 border-none text-xl shadow-inner";
+                slot.className = slotClass;
+                slot.dataset.type = "slot";
+                itemBox.appendChild(slot);
+                return itemBox;
+            };
+
+            if (q.isQuestionFour) {
+                const splitIdx = 3;
+                const topGrid = document.createElement('div');
+                topGrid.className = "grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-6 justify-items-center";
+                displayItems.slice(0, splitIdx).forEach((item, i) => topGrid.appendChild(createItemBox(item, i)));
+                wrapper.appendChild(topGrid);
+                renderSourceArea(q.options, wrapper, true, q.customColorGroups, currentAnswersOrder, false);
+                const bottomGrid = document.createElement('div');
+                bottomGrid.className = "grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto mt-6 justify-items-center";
+                displayItems.slice(splitIdx).forEach((item, i) => bottomGrid.appendChild(createItemBox(item, i + splitIdx)));
+                wrapper.appendChild(bottomGrid);
+            } else {
+                const list = document.createElement('div');
+                list.className = q.isThreeColumns ? "grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-10 justify-items-center" : "grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto mb-10 justify-items-center";
+                displayItems.forEach((item, i) => list.appendChild(createItemBox(item, i)));
+                wrapper.appendChild(list);
+                renderSourceArea(q.options, wrapper, true, q.customColorGroups, currentAnswersOrder);
+            }
         }
 
         function handleDragOver(e) {
@@ -613,11 +676,9 @@
             e.preventDefault();
             const box = e.currentTarget;
             box.classList.remove('drag-over');
-            
             const elId = e.dataTransfer.getData("text/plain");
             const el = document.getElementById(elId);
             if (!el) return;
-
             if (box.id === 'source-area') {
                 box.appendChild(el);
             } else {
@@ -631,16 +692,14 @@
             saveState();
         }
 
-        function renderSourceArea(options, wrapper, forceColor, useGroups = false, forbiddenOrder = null) {
+        function renderSourceArea(options, wrapper, forceColor, useGroups = false, forbiddenOrder = null, isQ1 = false) {
             const sourceArea = document.createElement('div');
-            sourceArea.className = "mt-12 p-8 bg-pink-50/30 rounded-3xl border-2 border-dashed border-pink-100 flex flex-wrap justify-center gap-4 min-h-[100px]";
+            sourceArea.className = "my-4 p-8 bg-pink-50/30 rounded-3xl border-2 border-dashed border-pink-100 flex flex-wrap justify-center gap-4 min-h-[100px]";
             sourceArea.id = "source-area";
             sourceArea.dataset.type = "source";
             sourceArea.ondragover = e => e.preventDefault();
             sourceArea.ondrop = handleDrop;
-            
             let shuffled = shuffleArray([...options]);
-            
             if (forbiddenOrder && shuffled.length > 1 && shuffled.length === forbiddenOrder.length) {
                 let attempts = 0;
                 while (attempts < 10) { 
@@ -650,7 +709,6 @@
                     attempts++;
                 }
             }
-            
             shuffled.forEach((opt, idx) => {
                 let colorIdx;
                 if (useGroups) {
@@ -658,15 +716,15 @@
                 } else {
                     colorIdx = forceColor ? options.indexOf(opt) % 7 : idx % 7;
                 }
-                sourceArea.appendChild(createDragElement(opt, colorIdx));
+                sourceArea.appendChild(createDragElement(opt, colorIdx, isQ1));
             });
             wrapper.appendChild(sourceArea);
         }
 
-        function createDragElement(text, colorIdx) {
+        function createDragElement(text, colorIdx, isQ1 = false) {
             const el = document.createElement('div');
-            // px-6 提供略寬於文字的間距，w-fit 確保不強制展開
-            el.className = `macaron-btn color-${colorIdx} px-6 py-2 rounded-xl shadow-md font-bold text-gray-700 border-2 border-white/50 text-xl whitespace-nowrap w-fit`;
+            const baseClass = `macaron-btn color-${colorIdx} rounded-xl shadow-md font-bold text-gray-700 border-2 border-white/50 text-xl whitespace-nowrap`;
+            el.className = isQ1 ? baseClass + " q1-btn-style" : baseClass + " px-6 py-2 w-fit";
             el.innerText = text;
             el.id = "opt-" + Math.random().toString(36).substr(2, 9);
             el.draggable = true;
@@ -675,9 +733,7 @@
                 e.dataTransfer.setData("text/plain", el.id); 
                 e.target.style.opacity = "0.5"; 
             };
-            el.ondragend = e => { 
-                e.target.style.opacity = "1"; 
-            };
+            el.ondragend = e => { e.target.style.opacity = "1"; };
             return el;
         }
 
@@ -741,15 +797,12 @@
         function checkAnswer() {
             const q = quizData[currentIdx];
             let incomplete = false;
-
             if (q.type === 'multiple_choice') {
                 const selected = userStates[currentIdx]?.selected;
-                if (!selected) { 
-                    showToast("請選擇一個答案喔！", "error"); 
-                    return; 
-                }
+                if (!selected) { showToast("請選擇一個答案喔！", "error"); return; }
                 quizCheckedStatus[currentIdx] = true;
                 totalChecks++;
+                questionCheckCounts[currentIdx] = (questionCheckCounts[currentIdx] || 0) + 1;
                 if (selected !== q.correct) {
                     showToast(`還差一點點，加油！`, "error");
                 } else {
@@ -762,19 +815,17 @@
                 }
             } else {
                 const boxes = document.querySelectorAll('.drop-target-box');
-                
                 boxes.forEach(box => {
                     const item = box.querySelector('.macaron-btn');
                     if (!item) incomplete = true;
                 });
-
                 if (incomplete) {
                     showToast("還有空格沒填完喔！請完成後再檢查。", "error");
                     return; 
                 }
-
                 quizCheckedStatus[currentIdx] = true;
                 totalChecks++;
+                questionCheckCounts[currentIdx] = (questionCheckCounts[currentIdx] || 0) + 1;
                 let errors = 0;
                 boxes.forEach(box => {
                     const item = box.querySelector('.macaron-btn');
@@ -787,7 +838,6 @@
                         setTimeout(() => box.classList.remove('correct-hint'), 1500);
                     }
                 });
-
                 if (errors === 0) {
                     showToast("🎉 太棒了！全部正確！", "success");
                     quizPassedStatus[currentIdx] = true;
@@ -824,7 +874,7 @@
             if (correctCount === quizData.length) {
                 showModal("超強挑戰者！", "您已經全對了！在重置之前，您有截圖保存這份光榮的結果嗎？", "確認重置挑戰", restartQuiz);
             } else {
-                restartQuiz();
+                showModal("重新開始測驗？", "您確定要清除目前的作答進度並重新開始測驗嗎？", "確認重置", restartQuiz);
             }
         }
 
@@ -833,6 +883,7 @@
             quizPassedStatus = {};
             quizCheckedStatus = {};
             totalChecks = 0;
+            questionCheckCounts = {}; 
             currentIdx = 0;
             document.getElementById('result-overlay').classList.add('hidden');
             document.querySelectorAll('.progress-circle').forEach(c => c.classList.remove('passed'));
@@ -845,16 +896,26 @@
             const timerText = document.getElementById('timer').innerText;
             let correctCount = Object.keys(quizPassedStatus).length;
             const quote = inspirationalQuotes[Math.floor(Math.random() * inspirationalQuotes.length)];
-            document.getElementById('quote-zh').innerText = quote.zh;
-            document.getElementById('quote-en').innerText = quote.en;
             document.getElementById('final-stats').innerHTML = `
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-pink-50 p-4 rounded-2xl text-center"><p class="text-gray-400 text-sm">總題數</p><p class="text-3xl font-black text-pink-600">${quizData.length}</p></div>
                     <div class="bg-green-50 p-4 rounded-2xl text-center"><p class="text-gray-400 text-sm">答對題數</p><p class="text-3xl font-black text-green-600">${correctCount}</p></div>
                 </div>
                 <div class="text-center p-4">
-                    <p class="text-lg text-gray-500">總用時：<span class="text-pink-500 font-bold">${timerText}</span> | 檢查次數：<span class="text-pink-500 font-bold">${totalChecks}</span></p>
+                    <p class="text-lg text-gray-500">總用時：<span class="text-pink-500 font-bold">${timerText}</span> | 總檢查次數：<span class="text-pink-500 font-bold">${totalChecks}</span></p>
                 </div>`;
+            const breakdownContainer = document.getElementById('check-breakdown');
+            breakdownContainer.innerHTML = quizData.map((_, i) => {
+                const count = questionCheckCounts[i] || 0;
+                return `
+                    <div class="flex flex-col items-center bg-gray-50 p-2 rounded-xl border border-gray-100">
+                        <span class="text-[10px] text-gray-400 font-bold">第 ${i+1} 題</span>
+                        <span class="text-lg font-black ${count > 1 ? 'text-orange-400' : 'text-sky-400'}">${count}</span>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('quote-zh').innerText = quote.zh;
+            document.getElementById('quote-en').innerText = quote.en;
             document.getElementById('result-overlay').classList.remove('hidden');
         }
     </script>
