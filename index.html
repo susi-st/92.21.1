@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>9下2-1.1認識網路(網路的連接) - 數據同步進階版</title>
+    <title>9下2-1.1認識網路(網路的連接) - 教學數據管理版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -30,7 +30,6 @@
             box-shadow: 0 20px 50px rgba(244, 114, 182, 0.1);
         }
 
-        /* 核心互動方塊 */
         .macaron-btn {
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: grab;
@@ -41,16 +40,9 @@
             pointer-events: auto !important;
         }
         
-        .macaron-btn * {
-            pointer-events: none;
-        }
+        .macaron-btn * { pointer-events: none; }
+        .macaron-btn:active { cursor: grabbing; transform: scale(0.95); }
 
-        .macaron-btn:active {
-            cursor: grabbing;
-            transform: scale(0.95);
-        }
-
-        /* 第一題專用樣式 */
         .q1-btn-style {
             width: 155px !important;
             height: 52px !important; 
@@ -58,7 +50,6 @@
             padding-right: 0.5rem !important; 
         }
 
-        /* 標籤通用樣式：第四、七、八題 */
         .q-compact-label {
             width: 92% !important; 
             padding-left: 0.75rem !important; 
@@ -86,7 +77,6 @@
             width: 100%;
         }
 
-        /* 第一題 Slot 樣式 (加底色) */
         .q1-slot-style {
             height: 52px !important;
             min-width: 155px !important;
@@ -94,14 +84,12 @@
             border: 2px dashed #bae6fd !important;
         }
 
-        /* 固定高度 Slot (第三至八題) */
         .q-fixed-height-slot {
             height: 52px !important;
             min-height: 52px !important;
             border-radius: 12px !important;
         }
 
-        /* 第三題句子中的格位寬度優化 */
         .q3-slot-inline {
             width: auto !important;
             min-width: 160px !important;
@@ -109,7 +97,6 @@
             display: inline-flex;
         }
 
-        /* 第五、六題固定方塊顏色 */
         .q56-fixed-left { background-color: #fee2e2 !important; color: #ef4444 !important; border-color: #fecaca !important; }
         .q56-fixed-right { background-color: #dcfce7 !important; color: #22c55e !important; border-color: #bbf7d0 !important; }
 
@@ -125,14 +112,9 @@
             filter: brightness(1.05);
         }
 
-        button, .choice-card, .progress-circle {
-            pointer-events: auto;
-        }
-        button *, .choice-card *, .progress-circle * {
-            pointer-events: none;
-        }
+        button, .choice-card, .progress-circle { pointer-events: auto; }
+        button *, .choice-card *, .progress-circle * { pointer-events: none; }
 
-        /* 進度圈圈樣式優化 */
         .progress-circle {
             width: 32px;
             height: 32px;
@@ -167,7 +149,6 @@
             75% { transform: translateX(5px); }
         }
 
-        /* 加快進場動畫 */
         .fade-in { animation: fadeIn 0.3s ease-out forwards; }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(5px); }
@@ -189,7 +170,6 @@
         }
         .winner-anim { animation: celebrate 0.5s ease infinite; }
 
-        /* 顏色類別 */
         .color-0 { background-color: var(--macaron-pink); }
         .color-1 { background-color: var(--macaron-orange); }
         .color-2 { background-color: var(--macaron-yellow); }
@@ -246,8 +226,8 @@
             </div>
         </div>
 
-        <div id="result-overlay" class="absolute inset-0 bg-white z-[500] flex flex-col items-center justify-start p-6 md:p-10 hidden fade-in overflow-y-auto">
-            <div class="border-4 border-pink-200 rounded-3xl p-8 max-w-3xl w-full bg-white shadow-xl my-4 relative">
+        <div id="result-overlay" class="absolute inset-0 bg-white z-[500] flex flex-col items-center justify-start p-6 md:p-10 hidden fade-in overflow-y-auto pt-10">
+            <div class="border-4 border-pink-200 rounded-3xl p-8 max-w-3xl w-full bg-white shadow-xl my-4 relative shrink-0">
                 <div class="flex items-center justify-center gap-4 mb-6 flex-wrap">
                     <h2 class="text-3xl font-bold text-pink-500 text-center text-balance">📝 測驗挑戰結果</h2>
                     <span class="bg-pink-100 text-pink-500 px-4 py-1 rounded-full font-black tracking-widest text-lg border border-pink-200" id="display-random-id"></span>
@@ -267,9 +247,8 @@
                     <div id="quote-en" class="text-base italic text-pink-400 leading-relaxed text-balance"></div>
                 </div>
             </div>
-            <!-- 重新挑戰鈕移至框外下方 -->
-            <div class="flex justify-center mt-4 mb-10">
-                <button id="restart-btn" class="px-12 py-4 bg-pink-500 text-white rounded-full text-xl font-bold shadow-xl hover:bg-pink-600 transition-all active:scale-95">重新挑戰</button>
+            <div class="flex justify-center mt-2 mb-10">
+                <button id="restart-btn" class="px-12 py-4 bg-pink-500 text-white rounded-full text-xl font-bold shadow-xl hover:bg-pink-600 transition-all active:scale-95 shrink-0">重新挑戰</button>
             </div>
         </div>
     </div>
@@ -277,7 +256,6 @@
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 px-8 py-4 rounded-full bg-gray-800 text-white font-bold opacity-0 transition-opacity pointer-events-none z-[600] text-xl shadow-lg"></div>
 
     <script>
-        // --- GAS 部署網址 ---
         const gasUrl = "https://script.google.com/macros/s/AKfycbyzKkCUbmOBjv-tHfPfEPFioNKAbYtDf74BR176NSC0EOMxwadic7ahUGOirXpCVazDHA/exec"; 
 
         function shuffleArray(array) {
@@ -417,11 +395,25 @@
         let questionCheckCounts = {}; 
         let startTime = Date.now();
         let timerInterval = null;
+        let challengeCount = 1;
 
         const inspirationalQuotes = [
             { en: "Connection is the energy that exists between people.", zh: "連結是人與人之間存在的能量。" },
-            { en: "Believe you can and you're halfway there.", zh: "成功是每天反覆努力的小成果積累而成的。" },
-            { en: "Stay curious, keep connecting.", zh: "保持好奇，持續連結。" }
+            { en: "The internet is not just a tool; it is a community.", zh: "網路不只是一個工具，它是一個社群。" },
+            { en: "Technology is best when it brings people together.", zh: "科技最美好的時刻，在於它將人們凝聚在一起。" },
+            { en: "The great thing about the internet is that it's a giant library.", zh: "網路最偉大的地方在於它是一座巨大的圖書館。" },
+            { en: "Education is the most powerful weapon which you can use to change the world.", zh: "教育是你可以用來改變世界最強大的武器。" },
+            { en: "The capacity to learn is a gift; the ability to learn is a skill; the willingness to learn is a choice.", zh: "學習的能力是天賦，學習的方法是技能，而學習的意願則是選擇。" },
+            { en: "Live as if you were to die tomorrow. Learn as if you were to live forever.", zh: "像明天就會死去那樣生活，像永生那樣學習。" },
+            { en: "The more that you read, the more things you will know.", zh: "你閱讀得越多，知道的事情就越多。" },
+            { en: "Success is not final, failure is not fatal: it is the courage to continue that counts.", zh: "成功不是終點，失敗也不是絕路：真正重要的是繼續前行的勇氣。" },
+            { en: "Believe you can and you're halfway there.", zh: "相信你自己做得到，你就已經成功了一半。" },
+            { en: "It always seems impossible until it's done.", zh: "在事情完成之前，它總是看似不可能。" },
+            { en: "Don't watch the clock; do what it does. Keep going.", zh: "不要一直看著時鐘；要做時鐘正在做的事：不停地前進。" },
+            { en: "I have not failed. I've just found 10,000 ways that won't work.", zh: "我沒有失敗，我只是發現了一萬種行不通的方法。" },
+            { en: "Every effort is paving the way for your future self.", zh: "每一分努力，都是在為未來的自己鋪路。" },
+            { en: "Don't fear mistakes; they are the best roadmaps to the right answer.", zh: "不要害怕犯錯，因為錯誤是通往正確答案的最佳路標。" },
+            { en: "Stay curious, keep connecting.", zh: "保持好奇，持續連結，世界會因為你的探索而變得更大。" }
         ];
 
         window.onload = () => {
@@ -455,6 +447,7 @@
 
         function startTimer() {
             startTime = Date.now();
+            if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 const elapsed = Math.floor((Date.now() - startTime) / 1000);
                 const mins = String(Math.floor(elapsed / 60)).padStart(2, '0');
@@ -582,7 +575,6 @@
             const grid = document.createElement('div');
             grid.className = "grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto";
             
-            // 每次渲染都隨機分配顏色與位置
             const colorPool = shuffleArray([0, 1, 2, 3, 4, 5, 6]);
             const shuffledOptions = shuffleArray([...q.options]);
             
@@ -828,12 +820,12 @@
         }
 
         function performNavigation(dir) {
-            if (dir > 0 && currentIdx + dir < quizData.length) {
+            if (dir > 0 && currentIdx === quizData.length - 1) {
+                showFinalSummary();
+            } else if (dir > 0 && currentIdx + dir < quizData.length) {
                 currentIdx += dir; renderQuestion();
             } else if (dir < 0) {
                 currentIdx += dir; renderQuestion();
-            } else if (dir > 0 && currentIdx === quizData.length - 1) {
-                showFinalSummary();
             }
         }
 
@@ -848,7 +840,6 @@
                 questionCheckCounts[currentIdx] = (questionCheckCounts[currentIdx] || 0) + 1;
                 if (selected !== q.correct) { 
                     showToast(`還差一點點，加油！選項位置與顏色已重新更換。`, "error"); 
-                    // 第二題答錯後刪除狀態並重新渲染以更換位置與顏色
                     delete userStates[currentIdx];
                     setTimeout(() => renderQuestion(), 800);
                 }
@@ -900,7 +891,7 @@
         }
 
         function handleRestart() {
-            let correctCount = Object.keys(quizPassedStatus).length;
+            const correctCount = Object.keys(quizPassedStatus).length;
             if (correctCount === quizData.length) {
                 showModal("超強挑戰者！", "您已經全對了！在重置之前，您有截圖保存這份光榮的結果嗎？", "確認重置挑戰", restartQuiz);
             } else {
@@ -910,17 +901,17 @@
 
         function restartQuiz() {
             userStates = {}; quizPassedStatus = {}; quizCheckedStatus = {}; totalChecks = 0; questionCheckCounts = {}; currentIdx = 0;
+            challengeCount++; 
             document.getElementById('result-overlay').classList.add('hidden');
             document.querySelectorAll('.progress-circle').forEach(c => c.classList.remove('passed'));
             renderQuestion();
             startTimer();
         }
 
-        // --- 新編號生成：H+英文(1碼)+亂數(1碼)-日(2碼)時(2碼).分(2碼) ---
         function generateRandomId() {
             const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             const l = letters[Math.floor(Math.random() * 26)];
-            const r1 = Math.floor(Math.random() * 10); // 0-9 亂數
+            const r1 = Math.floor(Math.random() * 10); 
             const now = new Date();
             const d = String(now.getDate()).padStart(2, '0');
             const h = String(now.getHours()).padStart(2, '0');
@@ -940,12 +931,13 @@
             const breakdownText = quizData.map((_, i) => `Q${i+1}:${questionCheckCounts[i] || 0}`).join(', ');
 
             document.getElementById('final-stats').innerHTML = `
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-pink-50 p-4 rounded-2xl text-center"><p class="text-gray-400 text-sm">總題數</p><p class="text-3xl font-black text-pink-600">${quizData.length}</p></div>
-                    <div class="bg-green-50 p-4 rounded-2xl text-center"><p class="text-gray-400 text-sm">答對題數</p><p class="text-3xl font-black text-green-600">${correctCount}</p></div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="bg-pink-50 p-3 rounded-2xl text-center"><p class="text-gray-400 text-[10px]">總題數</p><p class="text-2xl font-black text-pink-600">${quizData.length}</p></div>
+                    <div class="bg-green-50 p-3 rounded-2xl text-center"><p class="text-gray-400 text-[10px]">答對題數</p><p class="text-2xl font-black text-green-600">${correctCount}</p></div>
+                    <div class="bg-blue-50 p-3 rounded-2xl text-center"><p class="text-gray-400 text-[10px]">挑戰次數</p><p class="text-2xl font-black text-blue-600">${challengeCount}</p></div>
                 </div>
-                <div class="text-center p-4">
-                    <p class="text-lg text-gray-500">總用時：<span class="text-pink-500 font-bold">${timerText}</span> | 總檢查次數：<span class="text-pink-500 font-bold">${totalChecks}</span></p>
+                <div class="text-center p-2">
+                    <p class="text-sm text-gray-500 font-bold">總用時：<span class="text-pink-500 font-bold">${timerText}</span> | 總檢查：<span class="text-pink-500 font-bold">${totalChecks}</span> 次</p>
                 </div>`;
 
             const breakdownContainer = document.getElementById('check-breakdown');
@@ -961,13 +953,13 @@
             if (gasUrl) {
                 const payload = {
                     randomId: randomId,
+                    challengeCount: challengeCount,
                     totalQuestions: quizData.length,
                     correctAnswers: correctCount,
                     totalTime: timerText,
                     totalChecks: totalChecks,
                     breakdown: breakdownText
                 };
-                
                 try {
                     fetch(gasUrl, {
                         method: 'POST',
