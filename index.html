@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>9下2-1.1認識網路(網路的連接) - 教學管理版</title>
+    <title>9下2-1.1認識網路(網路的連接) - 數據同步進階版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -86,26 +86,32 @@
             width: 100%;
         }
 
-        /* 第一題 Slot 樣式 */
+        /* 第一題 Slot 樣式 (加底色) */
         .q1-slot-style {
             height: 52px !important;
             min-width: 155px !important;
+            background-color: #f0f9ff !important; 
+            border: 2px dashed #bae6fd !important;
         }
 
-        /* 通用固定高度 Slot (第三至八題) */
+        /* 固定高度 Slot (第三至八題) */
         .q-fixed-height-slot {
-            height: 48px !important;
-            min-height: 48px !important;
+            height: 52px !important;
+            min-height: 52px !important;
             border-radius: 12px !important;
         }
 
         /* 第三題句子中的格位寬度優化 */
         .q3-slot-inline {
             width: auto !important;
-            min-width: 130px !important;
+            min-width: 160px !important;
             margin: 0 4px;
             display: inline-flex;
         }
+
+        /* 第五、六題固定方塊顏色 */
+        .q56-fixed-left { background-color: #fee2e2 !important; color: #ef4444 !important; border-color: #fecaca !important; }
+        .q56-fixed-right { background-color: #dcfce7 !important; color: #22c55e !important; border-color: #bbf7d0 !important; }
 
         .drop-target-box {
             transition: all 0.3s ease;
@@ -152,17 +158,6 @@
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        /* 顏色定義 */
-        .color-0 { background-color: var(--macaron-pink); }
-        .color-1 { background-color: var(--macaron-orange); }
-        .color-2 { background-color: var(--macaron-yellow); }
-        .color-3 { background-color: var(--macaron-green); }
-        .color-4 { background-color: var(--macaron-blue); }
-        .color-5 { background-color: var(--macaron-purple); }
-        .color-6 { background-color: var(--macaron-mint); }
-        
-        .fixed-block { background-color: #f3f4f6; border: 2px solid #e5e7eb; display: inline-flex; justify-content: center; align-items: center; }
-
         .correct-hint { border: 4px solid #4ade80 !important; }
         .error-hint { border: 4px solid #f87171 !important; animation: shake 0.4s ease-in-out; }
 
@@ -182,9 +177,10 @@
         .choice-card {
             transition: all 0.3s ease;
             cursor: pointer;
+            border: 4px solid transparent;
         }
-        .choice-card:hover { transform: translateY(-5px); }
-        .choice-card.selected { border-color: #f472b6; background-color: #fff1f2; }
+        .choice-card:hover { transform: translateY(-5px); filter: brightness(1.02); }
+        .choice-card.selected { border-color: #f472b6; box-shadow: 0 0 15px rgba(244, 114, 182, 0.3); }
         
         @keyframes celebrate {
             0% { transform: scale(1); }
@@ -192,6 +188,15 @@
             100% { transform: scale(1); }
         }
         .winner-anim { animation: celebrate 0.5s ease infinite; }
+
+        /* 顏色類別 */
+        .color-0 { background-color: var(--macaron-pink); }
+        .color-1 { background-color: var(--macaron-orange); }
+        .color-2 { background-color: var(--macaron-yellow); }
+        .color-3 { background-color: var(--macaron-green); }
+        .color-4 { background-color: var(--macaron-blue); }
+        .color-5 { background-color: var(--macaron-purple); }
+        .color-6 { background-color: var(--macaron-mint); }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
@@ -241,9 +246,13 @@
             </div>
         </div>
 
-        <div id="result-overlay" class="absolute inset-0 bg-white z-[500] flex flex-col items-center justify-center p-6 md:p-10 hidden fade-in overflow-y-auto">
-            <div class="border-4 border-pink-200 rounded-3xl p-8 max-w-3xl w-full bg-white shadow-xl my-8">
-                <h2 class="text-3xl font-bold text-pink-500 mb-6 text-center text-balance">📝 測驗挑戰結果</h2>
+        <div id="result-overlay" class="absolute inset-0 bg-white z-[500] flex flex-col items-center justify-start p-6 md:p-10 hidden fade-in overflow-y-auto">
+            <div class="border-4 border-pink-200 rounded-3xl p-8 max-w-3xl w-full bg-white shadow-xl my-4 relative">
+                <div class="flex items-center justify-center gap-4 mb-6 flex-wrap">
+                    <h2 class="text-3xl font-bold text-pink-500 text-center text-balance">📝 測驗挑戰結果</h2>
+                    <span class="bg-pink-100 text-pink-500 px-4 py-1 rounded-full font-black tracking-widest text-lg border border-pink-200" id="display-random-id"></span>
+                </div>
+                
                 <div id="final-stats" class="space-y-4 mb-8"></div>
                 
                 <div class="mb-8">
@@ -253,13 +262,14 @@
                     <div id="check-breakdown" class="grid grid-cols-4 md:grid-cols-8 gap-2"></div>
                 </div>
 
-                <div class="bg-pink-50 p-6 rounded-2xl mb-8 text-center border border-pink-100">
+                <div class="bg-pink-50 p-6 rounded-2xl text-center border border-pink-100">
                     <div id="quote-zh" class="text-xl font-bold text-pink-600 mb-3 text-balance"></div>
                     <div id="quote-en" class="text-base italic text-pink-400 leading-relaxed text-balance"></div>
                 </div>
-                <div class="flex justify-center">
-                    <button onclick="handleRestart()" class="px-12 py-4 bg-pink-500 text-white rounded-full text-xl font-bold shadow-xl hover:bg-pink-600 transition-all active:scale-95">重新挑戰</button>
-                </div>
+            </div>
+            <!-- 重新挑戰鈕移至框外下方 -->
+            <div class="flex justify-center mt-4 mb-10">
+                <button id="restart-btn" class="px-12 py-4 bg-pink-500 text-white rounded-full text-xl font-bold shadow-xl hover:bg-pink-600 transition-all active:scale-95">重新挑戰</button>
             </div>
         </div>
     </div>
@@ -267,6 +277,9 @@
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 px-8 py-4 rounded-full bg-gray-800 text-white font-bold opacity-0 transition-opacity pointer-events-none z-[600] text-xl shadow-lg"></div>
 
     <script>
+        // --- GAS 部署網址 ---
+        const gasUrl = "https://script.google.com/macros/s/AKfycbyzKkCUbmOBjv-tHfPfEPFioNKAbYtDf74BR176NSC0EOMxwadic7ahUGOirXpCVazDHA/exec"; 
+
         function shuffleArray(array) {
             let currentIndex = array.length, randomIndex;
             while (currentIndex !== 0) {
@@ -302,17 +315,17 @@
                     { text: "比爾．蓋茲", icon: "🧑‍🦳" },
                     { text: "伊隆·馬斯克", icon: "🧑" },
                     { text: "馬克·祖克柏", icon: "👨‍🦱" }
-                ],
-                theme: "pink"
+                ]
             },
             {
                 type: 'drag_and_drop_slot', 
                 question: "請填入正確的網路定義敘述：",
-                parts: ["", "是透過有線或無線的", "，將許多電腦或硬體設備", "起來，讓彼此可以互相", "的技術。"],
-                blanks: ["網路", "傳輸媒介", "連接", "傳遞資訊"],
-                options: ["網路", "傳輸媒介", "連接", "傳遞資訊"],
+                parts: ["「網路」是透過有線或無線的", "，將許多電腦或硬體設備", "起來，讓彼此可以互相", "的技術。"],
+                blanks: ["傳輸媒介", "連接", "傳遞資訊"],
+                options: ["傳輸媒介", "連接", "傳遞資訊"],
                 forceColor: true,
-                shuffleOnError: true
+                shuffleOnError: true,
+                isQuestionThree: true
             },
             {
                 type: 'matching_list',
@@ -345,7 +358,8 @@
                 ],
                 forceColor: true,
                 shuffleOnError: true,
-                isFixedSlotQuestion: true 
+                isFixedSlotQuestion: true,
+                isQuestionFiveSix: true
             },
             {
                 type: 'matching_fixed',
@@ -360,14 +374,15 @@
                 ],
                 forceColor: true,
                 shuffleOnError: true,
-                isFixedSlotQuestion: true 
+                isFixedSlotQuestion: true,
+                isQuestionFiveSix: true
             },
             {
                 type: 'matching_list',
                 question: "請根據環境說明選擇適合的傳輸媒介：",
                 items: [
                     { label: "朋友借住家裡二樓兩天，有上網的需求，但二樓沒有網路，最近的網路設備在三樓，速度不要求，可以上網就好", answer: "雙絞線" },
-                    { label: "老闆想在工廠辦公室直線50公尺處，再增加一間辦公室，網路要從舊辦公室拉過去，但佈線路徑會經過高功率的機器", answer: "同軸電纜線" },
+                    { label: "老闆想在工廠辦公室直線50公尺處，再增加一間辦公室，網路要從舊辦公室拉過去，但佈線路徑會經過很多高功率的機器", answer: "同軸電纜線" },
                     { label: "校長想在操場司令台安排一個快速又穩定的網路節點，做為典禮或防災使用，但最近的網路設備在電腦教室隔壁的機房", answer: "光纖" }
                 ],
                 options: ["雙絞線", "同軸電纜線", "光纖"],
@@ -421,7 +436,6 @@
             container.innerHTML = quizData.map((_, i) => `<div class="progress-circle" data-idx="${i}" onclick="goToQuestion(${i})">${i+1}</div>`).join('');
         }
 
-        // 跳題函式：鎖定已過關題目
         function goToQuestion(idx) {
             if (quizPassedStatus[idx]) {
                 showToast("這題已經過關囉！請挑戰其他題目。", "error");
@@ -436,6 +450,7 @@
             document.getElementById('next-btn').onclick = () => navigate(1);
             document.getElementById('prev-btn').onclick = () => navigate(-1);
             document.getElementById('check-btn').onclick = checkAnswer;
+            document.getElementById('restart-btn').onclick = handleRestart;
         }
 
         function startTimer() {
@@ -516,13 +531,22 @@
                 } else {
                     item.className = "flex-1 flex flex-col items-center p-1";
                 }
-                const desc = document.createElement('p');
-                desc.className = "text-xs text-pink-400 font-bold h-6 pointer-events-none mb-1 text-center";
+                
+                const desc = document.createElement('div');
+                desc.className = `text-[10px] md:text-xs text-pink-400 font-bold h-8 flex items-center justify-center pointer-events-none mb-1 text-center ${q.isQuestionFiveSix ? 'w-[92%]' : ''}`;
                 desc.innerText = step.desc || "";
                 item.appendChild(desc);
+
                 if (step.type === 'fixed') {
                     const fixed = document.createElement('div');
-                    fixed.className = "fixed-block w-full py-5 rounded-xl font-bold text-gray-400 text-xl bg-gray-50 whitespace-nowrap pointer-events-none text-center";
+                    let fixedClass = "fixed-block w-full h-[52px] rounded-xl font-bold text-xl whitespace-nowrap pointer-events-none flex items-center justify-center";
+                    if (q.isQuestionFiveSix) {
+                        if (idx === 0) fixedClass += " q56-fixed-left";
+                        else fixedClass += " q56-fixed-right";
+                    } else {
+                        fixedClass += " bg-gray-50 text-gray-400";
+                    }
+                    fixed.className = fixedClass;
                     fixed.innerText = step.name;
                     item.appendChild(fixed);
                 } else {
@@ -539,7 +563,7 @@
                 flow.appendChild(item);
                 if (idx < q.steps.length - 1) {
                     const arrowWrap = document.createElement('div');
-                    arrowWrap.className = "pt-12 flex-shrink-0 text-gray-300 font-bold text-lg pointer-events-none";
+                    arrowWrap.className = "pt-14 flex-shrink-0 text-gray-300 font-bold text-lg pointer-events-none";
                     arrowWrap.innerHTML = "➜";
                     flow.appendChild(arrowWrap);
                 }
@@ -554,19 +578,25 @@
             title.className = "text-2xl text-gray-700 font-bold mb-10 text-center";
             title.innerText = q.question;
             wrapper.appendChild(title);
+            
             const grid = document.createElement('div');
             grid.className = "grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto";
+            
+            // 每次渲染都隨機分配顏色與位置
+            const colorPool = shuffleArray([0, 1, 2, 3, 4, 5, 6]);
             const shuffledOptions = shuffleArray([...q.options]);
+            
             shuffledOptions.forEach((opt, i) => {
                 const card = document.createElement('div');
-                card.className = `choice-card bg-white border-4 border-white p-6 rounded-3xl shadow-sm flex items-center justify-center gap-6 hover:bg-pink-50`;
+                const colorIdx = colorPool[i % colorPool.length];
+                card.className = `choice-card color-${colorIdx} p-6 rounded-3xl shadow-md flex items-center justify-center gap-6`;
                 card.dataset.value = opt.text;
                 card.onclick = (e) => {
-                    document.querySelectorAll('.choice-card').forEach(c => c.classList.remove('selected', 'border-pink-300'));
-                    e.currentTarget.classList.add('selected', 'border-pink-300');
+                    document.querySelectorAll('.choice-card').forEach(c => c.classList.remove('selected'));
+                    e.currentTarget.classList.add('selected');
                     saveState();
                 };
-                card.innerHTML = `<div class="text-5xl">${opt.icon}</div><div class="text-2xl font-bold text-gray-700">${opt.text}</div>`;
+                card.innerHTML = `<div class="text-5xl">${opt.icon}</div><div class="text-2xl font-bold text-gray-800">${opt.text}</div>`;
                 grid.appendChild(card);
             });
             wrapper.appendChild(grid);
@@ -579,7 +609,7 @@
             wrapper.appendChild(title);
 
             const sentence = document.createElement('div');
-            sentence.className = "text-xl md:text-2xl text-gray-800 leading-[4rem] text-center flex flex-wrap justify-center items-center gap-y-4 px-4";
+            sentence.className = "text-xl md:text-2xl text-gray-800 leading-[4.5rem] text-left flex flex-wrap justify-start items-center gap-y-4 px-8 md:px-20";
             
             q.parts.forEach((part, i) => {
                 if (part) {
@@ -655,12 +685,12 @@
                 const splitIdx = 3;
                 const topGrid = document.createElement('div');
                 topGrid.className = "grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-6 justify-items-center";
-                displayItems.slice(0, splitIdx).forEach((item, i) => topGrid.appendChild(createItemBox(item, i)));
+                displayItems.slice(0, 3).forEach((item, i) => topGrid.appendChild(createItemBox(item, i)));
                 wrapper.appendChild(topGrid);
                 renderSourceArea(q.options, wrapper, true, q.customColorGroups, currentAnswersOrder, false);
                 const bottomGrid = document.createElement('div');
                 bottomGrid.className = "grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto mt-6 justify-items-center";
-                displayItems.slice(splitIdx).forEach((item, i) => bottomGrid.appendChild(createItemBox(item, i + splitIdx)));
+                displayItems.slice(3, 6).forEach((item, i) => bottomGrid.appendChild(createItemBox(item, i + 3)));
                 wrapper.appendChild(bottomGrid);
             } else {
                 const list = document.createElement('div');
@@ -688,12 +718,19 @@
             const el = document.getElementById(elId);
             if (!el) return;
             if (box.id === 'source-area') {
+                el.style.width = ""; el.style.height = "";
                 box.appendChild(el);
             } else {
                 const slot = box.querySelector('.slot') || (box.dataset.type === 'slot' ? box : null);
                 if (slot) {
                     const existing = slot.querySelector('.macaron-btn');
-                    if (existing) document.getElementById('source-area').appendChild(existing);
+                    if (existing) {
+                        existing.style.width = ""; existing.style.height = "";
+                        document.getElementById('source-area').appendChild(existing);
+                    }
+                    if (quizData[currentIdx].isQuestionFiveSix) {
+                        el.style.width = "100%"; el.style.height = "100%";
+                    }
                     slot.appendChild(el);
                 }
             }
@@ -719,11 +756,8 @@
             }
             shuffled.forEach((opt, idx) => {
                 let colorIdx;
-                if (useGroups) {
-                    colorIdx = (idx % 3) + 3; 
-                } else {
-                    colorIdx = forceColor ? options.indexOf(opt) % 7 : idx % 7;
-                }
+                if (useGroups) colorIdx = (idx % 3) + 3; 
+                else colorIdx = forceColor ? options.indexOf(opt) % 7 : idx % 7;
                 sourceArea.appendChild(createDragElement(opt, colorIdx, isQ1));
             });
             wrapper.appendChild(sourceArea);
@@ -767,7 +801,7 @@
             if (q.type === 'multiple_choice') {
                 if (state.selected) {
                     const card = document.querySelector(`.choice-card[data-value="${state.selected}"]`);
-                    if (card) card.classList.add('selected', 'border-pink-300');
+                    if (card) card.classList.add('selected');
                 }
             } else {
                 Object.keys(state.values).forEach(idx => {
@@ -775,7 +809,10 @@
                     const box = document.querySelector(`.drop-target-box[data-index="${idx}"]`);
                     if (el && box) {
                         const slot = box.querySelector('.slot');
-                        if (slot) slot.appendChild(el);
+                        if (slot) {
+                            if (q.isQuestionFiveSix) { el.style.width = "100%"; el.style.height = "100%"; }
+                            slot.appendChild(el);
+                        }
                     }
                 });
             }
@@ -792,11 +829,9 @@
 
         function performNavigation(dir) {
             if (dir > 0 && currentIdx + dir < quizData.length) {
-                currentIdx += dir;
-                renderQuestion();
+                currentIdx += dir; renderQuestion();
             } else if (dir < 0) {
-                currentIdx += dir;
-                renderQuestion();
+                currentIdx += dir; renderQuestion();
             } else if (dir > 0 && currentIdx === quizData.length - 1) {
                 showFinalSummary();
             }
@@ -811,72 +846,48 @@
                 quizCheckedStatus[currentIdx] = true;
                 totalChecks++;
                 questionCheckCounts[currentIdx] = (questionCheckCounts[currentIdx] || 0) + 1;
-                if (selected !== q.correct) {
-                    showToast(`還差一點點，加油！`, "error");
-                } else {
-                    handleSuccess();
+                if (selected !== q.correct) { 
+                    showToast(`還差一點點，加油！選項位置與顏色已重新更換。`, "error"); 
+                    // 第二題答錯後刪除狀態並重新渲染以更換位置與顏色
+                    delete userStates[currentIdx];
+                    setTimeout(() => renderQuestion(), 800);
                 }
+                else { handleSuccess(); }
             } else {
                 const boxes = document.querySelectorAll('.drop-target-box');
-                boxes.forEach(box => {
-                    const item = box.querySelector('.macaron-btn');
-                    if (!item) incomplete = true;
-                });
-                if (incomplete) {
-                    showToast("還有空格沒填完喔！請完成後再檢查。", "error");
-                    return; 
-                }
+                boxes.forEach(box => { if (!box.querySelector('.macaron-btn')) incomplete = true; });
+                if (incomplete) { showToast("還有空格沒填完喔！請完成後再檢查。", "error"); return; }
                 quizCheckedStatus[currentIdx] = true;
                 totalChecks++;
                 questionCheckCounts[currentIdx] = (questionCheckCounts[currentIdx] || 0) + 1;
                 let errors = 0;
                 boxes.forEach(box => {
                     const item = box.querySelector('.macaron-btn');
-                    if (item.dataset.value !== box.dataset.answer) {
-                        errors++;
-                        box.classList.add('error-hint');
-                        setTimeout(() => box.classList.remove('error-hint'), 1500);
-                    } else {
-                        box.classList.add('correct-hint');
-                        setTimeout(() => box.classList.remove('correct-hint'), 1500);
-                    }
+                    if (item.dataset.value !== box.dataset.answer) { errors++; box.classList.add('error-hint'); setTimeout(() => box.classList.remove('error-hint'), 1500); }
+                    else { box.classList.add('correct-hint'); setTimeout(() => box.classList.remove('correct-hint'), 1500); }
                 });
-                if (errors === 0) {
-                    handleSuccess();
-                } else {
-                    showToast(`還差一點點，答案將重新歸位，請再試一次！`, "error");
-                    if (q.shuffleOnError) {
-                        setTimeout(() => {
-                            delete userStates[currentIdx];
-                            renderQuestion();
-                            showToast("偵測到錯誤，系統已重新洗牌！", "error");
-                        }, 1200);
-                    }
+                if (errors === 0) { handleSuccess(); }
+                else {
+                    showToast(`還差一點點，答案將重新歸位！`, "error");
+                    if (q.shuffleOnError) { setTimeout(() => { delete userStates[currentIdx]; renderQuestion(); }, 1200); }
                 }
             }
         }
 
-        // 處理成功邏輯：加快跳題速度
         function handleSuccess() {
             showToast("🎉 太棒了！全部正確！系統將跳下一題。", "success");
             quizPassedStatus[currentIdx] = true;
             updateProgressIndicators();
-            
             if (quizData[currentIdx].type === 'multiple_choice') {
                 const winCard = document.querySelector('.choice-card.selected');
                 if(winCard) winCard.classList.add('winner-anim');
             }
-
-            // 加快跳題延遲：由 1.2s 改為 0.6s
-            setTimeout(() => {
-                performNavigation(1);
-            }, 600);
+            setTimeout(() => { performNavigation(1); }, 600);
         }
 
         function updateProgressIndicators() {
             document.querySelectorAll('.progress-circle').forEach(circle => {
-                const idx = parseInt(circle.dataset.idx);
-                if (quizPassedStatus[idx]) circle.classList.add('passed');
+                if (quizPassedStatus[parseInt(circle.dataset.idx)]) circle.classList.add('passed');
             });
         }
 
@@ -898,23 +909,36 @@
         }
 
         function restartQuiz() {
-            userStates = {};
-            quizPassedStatus = {};
-            quizCheckedStatus = {};
-            totalChecks = 0;
-            questionCheckCounts = {}; 
-            currentIdx = 0;
+            userStates = {}; quizPassedStatus = {}; quizCheckedStatus = {}; totalChecks = 0; questionCheckCounts = {}; currentIdx = 0;
             document.getElementById('result-overlay').classList.add('hidden');
             document.querySelectorAll('.progress-circle').forEach(c => c.classList.remove('passed'));
             renderQuestion();
             startTimer();
         }
 
-        function showFinalSummary() {
+        // --- 新編號生成：H+英文(1碼)+亂數(1碼)-日(2碼)時(2碼).分(2碼) ---
+        function generateRandomId() {
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const l = letters[Math.floor(Math.random() * 26)];
+            const r1 = Math.floor(Math.random() * 10); // 0-9 亂數
+            const now = new Date();
+            const d = String(now.getDate()).padStart(2, '0');
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            return `H${l}${r1}-${d}${h}.${m}`;
+        }
+
+        async function showFinalSummary() {
             clearInterval(timerInterval);
             const timerText = document.getElementById('timer').innerText;
-            let correctCount = Object.keys(quizPassedStatus).length;
+            const correctCount = Object.keys(quizPassedStatus).length;
             const quote = inspirationalQuotes[Math.floor(Math.random() * inspirationalQuotes.length)];
+            const randomId = generateRandomId();
+            
+            document.getElementById('display-random-id').innerText = `編號: ${randomId}`;
+            
+            const breakdownText = quizData.map((_, i) => `Q${i+1}:${questionCheckCounts[i] || 0}`).join(', ');
+
             document.getElementById('final-stats').innerHTML = `
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-pink-50 p-4 rounded-2xl text-center"><p class="text-gray-400 text-sm">總題數</p><p class="text-3xl font-black text-pink-600">${quizData.length}</p></div>
@@ -923,19 +947,36 @@
                 <div class="text-center p-4">
                     <p class="text-lg text-gray-500">總用時：<span class="text-pink-500 font-bold">${timerText}</span> | 總檢查次數：<span class="text-pink-500 font-bold">${totalChecks}</span></p>
                 </div>`;
+
             const breakdownContainer = document.getElementById('check-breakdown');
             breakdownContainer.innerHTML = quizData.map((_, i) => {
                 const count = questionCheckCounts[i] || 0;
-                return `
-                    <div class="flex flex-col items-center bg-gray-50 p-2 rounded-xl border border-gray-100">
-                        <span class="text-[10px] text-gray-400 font-bold">第 ${i+1} 題</span>
-                        <span class="text-lg font-black ${count > 1 ? 'text-orange-400' : 'text-sky-400'}">${count}</span>
-                    </div>
-                `;
+                return `<div class="flex flex-col items-center bg-gray-50 p-2 rounded-xl border border-gray-100"><span class="text-[10px] text-gray-400 font-bold">Q${i+1}</span><span class="text-lg font-black ${count > 1 ? 'text-orange-400' : 'text-sky-400'}">${count}</span></div>`;
             }).join('');
+
             document.getElementById('quote-zh').innerText = quote.zh;
             document.getElementById('quote-en').innerText = quote.en;
             document.getElementById('result-overlay').classList.remove('hidden');
+
+            if (gasUrl) {
+                const payload = {
+                    randomId: randomId,
+                    totalQuestions: quizData.length,
+                    correctAnswers: correctCount,
+                    totalTime: timerText,
+                    totalChecks: totalChecks,
+                    breakdown: breakdownText
+                };
+                
+                try {
+                    fetch(gasUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                } catch (e) { console.error("Data submission failed", e); }
+            }
         }
     </script>
 </body>
