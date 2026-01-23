@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>9下2-1.1認識網路(網路的連接) - 教學版</title>
+    <title>9下2-1.1認識網路(網路的連接) - 教學管理版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -126,6 +126,32 @@
             pointer-events: none;
         }
 
+        /* 進度圈圈樣式優化 */
+        .progress-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            background-color: white;
+            border: 2px solid #e5e7eb;
+            color: #9ca3af;
+            cursor: pointer;
+        }
+        .progress-circle:hover:not(.passed) { border-color: #f472b6; color: #f472b6; transform: scale(1.1); }
+        .progress-circle.active { border-color: #f472b6; background-color: #fff1f2; color: #f472b6; box-shadow: 0 0 10px rgba(244, 114, 182, 0.2); }
+        .progress-circle.passed {
+            background-color: #f472b6;
+            border-color: #f472b6;
+            color: white;
+            cursor: not-allowed; 
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
         /* 顏色定義 */
         .color-0 { background-color: var(--macaron-pink); }
         .color-1 { background-color: var(--macaron-orange); }
@@ -146,34 +172,11 @@
             75% { transform: translateX(5px); }
         }
 
-        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        /* 加快進場動畫 */
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(5px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-
-        .progress-circle {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.9rem;
-            transition: all 0.4s ease;
-            background-color: white;
-            border: 2px solid #e5e7eb;
-            color: #9ca3af;
-            cursor: pointer;
-        }
-        .progress-circle:hover { border-color: #f472b6; color: #f472b6; }
-        .progress-circle.active { border-color: #f472b6; background-color: #fff1f2; color: #f472b6; transform: scale(1.1); }
-        .progress-circle.passed {
-            background-color: #f472b6;
-            border-color: #f472b6;
-            color: white;
-            box-shadow: 0 4px 10px rgba(244, 114, 182, 0.2);
         }
 
         .choice-card {
@@ -278,12 +281,12 @@
             {
                 type: 'matching_fixed',
                 question: "請根據網路發展史，由遠到近排列正確的順序：",
-                options: ["ARPANET", "TCP/IP", "網域名稱服務", "WWW+瀏覽器", "TANet"],
+                options: ["ARPANET", "TCP/IP", "網域名稱服務", "瀏覽器+WWW", "TANet"],
                 steps: [
                     { type: 'slot', answer: "ARPANET", desc: "解決戰時通訊被阻斷的危機" },
                     { type: 'slot', answer: "TCP/IP", desc: "解決不同電腦系統通訊困境" },
                     { type: 'slot', answer: "網域名稱服務", desc: "解決IP不易記憶問題" },
-                    { type: 'slot', answer: "WWW+瀏覽器", desc: "讓網路資料能更多元化" },
+                    { type: 'slot', answer: "瀏覽器+WWW", desc: "讓網路資料能更多元化" },
                     { type: 'slot', answer: "TANet", desc: "臺灣學術網路起點" }
                 ],
                 forceColor: true,
@@ -292,13 +295,13 @@
             },
             {
                 type: 'multiple_choice',
-                question: "請問誰發明了全球資訊網與網頁瀏覽器？",
+                question: "請問誰發明了「網頁瀏覽器」進而推動了「全球資訊網」的形成？",
                 correct: "柏納．李",
                 options: [
-                    { text: "柏納．李", icon: "🌐" },
-                    { text: "比爾．蓋茲", icon: "💻" },
-                    { text: "伊隆·馬斯克", icon: "🚀" },
-                    { text: "馬克·祖克柏", icon: "👥" }
+                    { text: "柏納．李", icon: "🧔" },
+                    { text: "比爾．蓋茲", icon: "🧑‍🦳" },
+                    { text: "伊隆·馬斯克", icon: "🧑" },
+                    { text: "馬克·祖克柏", icon: "👨‍🦱" }
                 ],
                 theme: "pink"
             },
@@ -331,7 +334,7 @@
             },
             {
                 type: 'matching_fixed',
-                question: "請依「傳輸速度」排列：",
+                question: "請由「慢」到「快」排列有線傳輸媒介速度：",
                 options: ["雙絞線", "同軸電纜線", "光纖"],
                 steps: [
                     { type: 'fixed', name: "慢" },
@@ -346,7 +349,7 @@
             },
             {
                 type: 'matching_fixed',
-                question: "請依傳輸距離排列：",
+                question: "請依傳輸距離「遠」到「近」排列有線傳輸媒介：",
                 options: ["光纖", "同軸電纜線", "雙絞線"],
                 steps: [
                     { type: 'fixed', name: "遠" },
@@ -364,8 +367,8 @@
                 question: "請根據環境說明選擇適合的傳輸媒介：",
                 items: [
                     { label: "朋友借住家裡二樓兩天，有上網的需求，但二樓沒有網路，最近的網路設備在三樓，速度不要求，可以上網就好", answer: "雙絞線" },
-                    { label: "工廠辦公室人太多坐不下，在直線50公尺處，新增一間辦公室，想串連舊辦公室的網路，佈線路徑會經過很多高功率的機器", answer: "同軸電纜線" },
-                    { label: "操場司令台想安排一個快速穩定的網路節點，但最近的設備在電腦教室", answer: "光纖" }
+                    { label: "老闆想在工廠辦公室直線50公尺處，再增加一間辦公室，網路要從舊辦公室拉過去，但佈線路徑會經過高功率的機器", answer: "同軸電纜線" },
+                    { label: "校長想在操場司令台安排一個快速又穩定的網路節點，做為典禮或防災使用，但最近的網路設備在電腦教室隔壁的機房", answer: "光纖" }
                 ],
                 options: ["雙絞線", "同軸電纜線", "光纖"],
                 randomPos: true,
@@ -418,7 +421,12 @@
             container.innerHTML = quizData.map((_, i) => `<div class="progress-circle" data-idx="${i}" onclick="goToQuestion(${i})">${i+1}</div>`).join('');
         }
 
+        // 跳題函式：鎖定已過關題目
         function goToQuestion(idx) {
+            if (quizPassedStatus[idx]) {
+                showToast("這題已經過關囉！請挑戰其他題目。", "error");
+                return;
+            }
             saveState();
             currentIdx = idx;
             renderQuestion();
@@ -491,7 +499,7 @@
             const title = document.createElement('h3');
             title.className = "text-2xl text-gray-700 font-bold mb-10 text-center";
             title.innerText = q.question;
-            wrapper.appendChild(title); // 修正：加入這行確保題目顯示
+            wrapper.appendChild(title);
 
             const flow = document.createElement('div');
             flow.className = "flex flex-row items-start justify-center w-full gap-1 max-w-5xl mx-auto";
@@ -806,12 +814,7 @@
                 if (selected !== q.correct) {
                     showToast(`還差一點點，加油！`, "error");
                 } else {
-                    showToast("🎉 太棒了！全部正確！", "success");
-                    quizPassedStatus[currentIdx] = true;
-                    const winCard = document.querySelector('.choice-card.selected');
-                    winCard.classList.add('winner-anim');
-                    updateProgressIndicators();
-                    setTimeout(() => winCard.classList.remove('winner-anim'), 2000);
+                    handleSuccess();
                 }
             } else {
                 const boxes = document.querySelectorAll('.drop-target-box');
@@ -839,9 +842,7 @@
                     }
                 });
                 if (errors === 0) {
-                    showToast("🎉 太棒了！全部正確！", "success");
-                    quizPassedStatus[currentIdx] = true;
-                    updateProgressIndicators();
+                    handleSuccess();
                 } else {
                     showToast(`還差一點點，答案將重新歸位，請再試一次！`, "error");
                     if (q.shuffleOnError) {
@@ -855,9 +856,27 @@
             }
         }
 
+        // 處理成功邏輯：加快跳題速度
+        function handleSuccess() {
+            showToast("🎉 太棒了！全部正確！系統將跳下一題。", "success");
+            quizPassedStatus[currentIdx] = true;
+            updateProgressIndicators();
+            
+            if (quizData[currentIdx].type === 'multiple_choice') {
+                const winCard = document.querySelector('.choice-card.selected');
+                if(winCard) winCard.classList.add('winner-anim');
+            }
+
+            // 加快跳題延遲：由 1.2s 改為 0.6s
+            setTimeout(() => {
+                performNavigation(1);
+            }, 600);
+        }
+
         function updateProgressIndicators() {
             document.querySelectorAll('.progress-circle').forEach(circle => {
-                if (quizPassedStatus[parseInt(circle.dataset.idx)]) circle.classList.add('passed');
+                const idx = parseInt(circle.dataset.idx);
+                if (quizPassedStatus[idx]) circle.classList.add('passed');
             });
         }
 
